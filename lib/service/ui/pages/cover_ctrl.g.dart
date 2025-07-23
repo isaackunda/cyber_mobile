@@ -6,7 +6,7 @@ part of 'cover_ctrl.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$coverCtrlHash() => r'4be5ea0e1d97b1de0f1eb0904c425f982f56583a';
+String _$coverCtrlHash() => r'17b5020728e8798124f1250e6c4e02b8c910de9a';
 
 /// See also [CoverCtrl].
 @ProviderFor(CoverCtrl)

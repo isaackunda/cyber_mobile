@@ -1,15 +1,17 @@
 import 'package:cyber_mobile/account/ui/pages/auth_page.dart';
 import 'package:cyber_mobile/account/ui/pages/intro_page.dart';
 import 'package:cyber_mobile/account/ui/pages/register_account_page.dart';
+import 'package:cyber_mobile/main.dart';
 import 'package:cyber_mobile/service/ui/pages/cover_page.dart';
 import 'package:cyber_mobile/service/ui/pages/covers_page.dart';
 import 'package:cyber_mobile/service/ui/pages/create_cv_page.dart';
+import 'package:cyber_mobile/service/ui/pages/cv_preview_page.dart';
 import 'package:cyber_mobile/service/ui/pages/cvs_page.dart';
 import 'package:cyber_mobile/service/ui/pages/home_page.dart';
 import 'package:cyber_mobile/service/ui/pages/main_sreen.dart';
 import 'package:cyber_mobile/service/ui/pages/order_page.dart';
 import 'package:cyber_mobile/service/ui/pages/orders_page.dart';
-import 'package:cyber_mobile/service/ui/pages/payment_page.dart';
+import 'package:cyber_mobile/service/ui/pages/print_payment_page.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_print_service_page.dart';
 import 'package:cyber_mobile/service/ui/pages/pdf_preview_page.dart';
 import 'package:cyber_mobile/service/ui/pages/preview_cover_page.dart';
@@ -17,8 +19,10 @@ import 'package:cyber_mobile/service/ui/pages/process_print_order_page.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_page.dart';
 import 'package:cyber_mobile/service/ui/templates/classic_template.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'account/ui/pages/otp_login_page.dart';
 import 'account/ui/pages/process_register_page.dart';
@@ -38,6 +42,7 @@ enum Urls {
   cvs,
   createCv,
   modeleCv,
+  cvPreview,
   upload,
   cover,
   covers,
@@ -78,6 +83,31 @@ GoRouter router(ref) {
 
   return GoRouter(
     initialLocation: '/main',
+    navigatorKey: navigatorKey,
+    redirect: (context, state) async {
+      //
+      if (kDebugMode) {
+        print('Redirecting... Current path: 000');
+      }
+      // Vérifie s’il y a un token
+      final prefs = await SharedPreferences.getInstance();
+      final sessionToken = prefs.getString('sessionID');
+
+      // Si le token est vide ou null, redirige vers la page d'authentification
+      if (kDebugMode) {
+        print('object : $sessionToken');
+        print('Redirecting... Current path: 1111');
+      }
+
+      // Si on est à la racine, on redirige
+      if (state.fullPath == '/intro') {
+        return (sessionToken == null || sessionToken.isEmpty)
+            ? '/intro'
+            : '/main';
+      }
+
+      return null; // Pas de redirection nécessaire
+    },
 
     routes: <RouteBase>[
       GoRoute(
@@ -157,6 +187,13 @@ GoRouter router(ref) {
           return PdfPreviewPage();
         },
       ),
+      /*GoRoute(
+        path: '/cv-preview',
+        name: Urls.cvPreview.name,
+        builder: (context, state) {
+          return CvPreviewPage();
+        },
+      ),*/
       GoRoute(
         path: '/cover',
         name: Urls.cover.name,
@@ -196,7 +233,8 @@ GoRouter router(ref) {
         path: '/payment',
         name: Urls.payment.name,
         pageBuilder:
-            (context, state) => buildPageWithTransition(PaymentPage(), state),
+            (context, state) =>
+                buildPageWithTransition(PrintPaymentPage(), state),
       ),
       GoRoute(
         path: '/process-print-order',

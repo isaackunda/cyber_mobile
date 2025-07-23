@@ -53,6 +53,7 @@ dependencies:
   printing: ^5.14.2
   flutter_datetime_picker_plus: ^2.2.0
   screenshot: ^3.0.0
+  #webview_flutter: ^4.13.0
 
 dev_dependencies:
   flutter_test:

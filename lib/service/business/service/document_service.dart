@@ -11,7 +11,6 @@ import '../models/service_data.dart';
 import '../models/template.dart';
 
 abstract class DocumentService {
-
   Future<void> uploadFile(File file);
   Future<List<Template>> getCoverPageTemplates();
   Future<List<Template>> getCvTemplates();
@@ -23,6 +22,5 @@ abstract class DocumentService {
   Future<void> payForService(ServiceData service);
   Future<dynamic> getPrintPrice(PrintInfo data);
   Future<dynamic> checkPayment(String ref, String sId);
-  Future<dynamic> payBill();
-
+  Future<dynamic> payBill(String ref, String phoneNumber, String sessionId);
 }

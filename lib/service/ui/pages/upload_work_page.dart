@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cyber_mobile/account/ui/pages/login_ctrl.dart';
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
 import 'package:cyber_mobile/service/business/models/print_info.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
@@ -286,8 +287,6 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
 
   @override
   Widget build(BuildContext context) {
-    var state = ref.watch(loginCtrlProvider);
-
     // Largeur maximale pour le conteneur de l'aperçu
     double previewWidth =
         MediaQuery.of(context).size.width -
@@ -836,7 +835,7 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
         return SafeArea(
           child: StatefulBuilder(
             builder: (context, setState) {
-              final state = ref.watch(paymentCtrlProvider);
+              var state = ref.watch(sessionCtrlProvider);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(
@@ -895,16 +894,17 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
                                     final data = PrintInfo(
                                       key: selectedMode!,
                                       pages: _selectedPages.length.toString(),
-                                      sessionId: state.sessionId.toString(),
+                                      sessionId: state.userData.sessionId,
                                     );
 
                                     final ctrl = ref.watch(
                                       paymentCtrlProvider.notifier,
                                     );
 
-                                    final result = await ctrl.getPriceInfos(
-                                      data,
-                                    );
+                                    final result = await ctrl
+                                        .getPrintPriceInfos(data);
+
+                                    //print('');
 
                                     if (!context.mounted) return;
 

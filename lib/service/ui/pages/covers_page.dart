@@ -1,3 +1,4 @@
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:file_picker/file_picker.dart';
@@ -310,6 +311,7 @@ class _CoversPageState extends ConsumerState<CoversPage> {
             builder: (context, setState) {
               final state = ref.watch(paymentCtrlProvider);
               final uploadState = ref.watch(uploadWorkCtrlProvider);
+              final sessionState = ref.watch(sessionCtrlProvider);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(
@@ -370,16 +372,16 @@ class _CoversPageState extends ConsumerState<CoversPage> {
                                       pages:
                                           uploadState.selectedPages.length
                                               .toString(),
-                                      sessionId: state.sessionId.toString(),
+                                      sessionId:
+                                          sessionState.userData.sessionId,
                                     );
 
                                     final ctrl = ref.watch(
                                       paymentCtrlProvider.notifier,
                                     );
 
-                                    final result = await ctrl.getPriceInfos(
-                                      data,
-                                    );
+                                    final result = await ctrl
+                                        .getPrintPriceInfos(data);
 
                                     if (!context.mounted) return;
 

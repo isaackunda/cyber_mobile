@@ -72,74 +72,126 @@ class DocumentServiceNetwork implements DocumentService {
   Future<dynamic> getPrintPrice(PrintInfo data) async {
     try {
       final response = await http.post(
-        Uri.parse('https://odigroup.cd/cbmplus/api/cart/get-price'),
-        body: {
+        Uri.parse('https://odigroup.cd/cbmplus/api/cart/print/get-price/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
           'key': data.key,
           'pages': data.pages,
           'sessionID': data.sessionId,
-        },
+        }),
       );
-      //
-      //final response = await http.get(uri);
 
       if (kDebugMode) {
         print('--- DÉBOGAGE DE LA RÉPONSE API ---');
-        //print('URL de la requête: $uri');
         print('Statut HTTP reçu: ${response.statusCode}');
-        print(
-          'Corps de la réponse brut du serveur: "${response.body}"',
-        ); // <<< REGARDEZ ICI !!!
+        print('Corps brut: "${response.body}"');
         print('Longueur du corps: ${response.body.length}');
         print('--- FIN DÉBOGAGE ---');
       }
 
-      if (kDebugMode) {
-        print('c\'est dohi');
-      }
+      final responseData = jsonDecode(response.body);
+
       if (response.statusCode == 200) {
-        // Successfully registered the email
         if (kDebugMode) {
-          print('Email registered successfully: ?');
+          print('Requête succès : $responseData');
         }
-
-        var data = jsonDecode(response.body);
-
-        if (kDebugMode) {
-          print(' requete success :  $data} ');
-        }
-
-        return Future.value(data);
+        return responseData;
       } else {
-        // Handle the error response
         if (kDebugMode) {
           print(
-            'Failed to register email: ${response.reasonPhrase}, ${response.statusCode}',
+            'Échec requête: ${response.reasonPhrase}, ${response.statusCode}',
           );
+          print('Réponse d\'erreur : $responseData');
         }
-        var data = jsonDecode(response.body);
-        if (kDebugMode) {
-          print('object: $data');
-        }
-        return Future.value(data);
+        return responseData;
       }
     } catch (e) {
-      // Handle any exceptions that may occur during the registration process
       if (kDebugMode) {
-        print('step-echec-05');
+        print('Erreur dans getPrintPrice: $e');
       }
-      throw Exception('Failed to register email: $e');
+      throw Exception('Erreur lors de la récupération du prix : $e');
     }
   }
 
   @override
-  Future checkPayment(String ref, String sId) {
-    // TODO: implement checkPayment
-    throw UnimplementedError();
+  Future checkPayment(String ref, String sId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://odigroup.cd/cbmplus/api/cart/print/check-payment/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'reference': ref, 'sessionID': sId}),
+      );
+
+      if (kDebugMode) {
+        print('--- DÉBOGAGE DE LA RÉPONSE API ---');
+        print('Statut HTTP reçu: ${response.statusCode}');
+        print('Corps brut: "${response.body}"');
+        print('Longueur du corps: ${response.body.length}');
+        print('--- FIN DÉBOGAGE ---');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('Requête succès : $responseData');
+        }
+        return responseData;
+      } else {
+        if (kDebugMode) {
+          print(
+            'Échec requête: ${response.reasonPhrase}, ${response.statusCode}',
+          );
+          print('Réponse d\'erreur : $responseData');
+        }
+        return responseData;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur dans getPrintPrice: $e');
+      }
+      throw Exception('Erreur lors de la récupération du prix : $e');
+    }
   }
 
   @override
-  Future payBill() {
-    // TODO: implement payBill
-    throw UnimplementedError();
+  Future<dynamic> payBill(String ref, String phoneNumber, String sessionId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://odigroup.cd/cbmplus/api/cart/print/pay-bill/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'reference': ref, 'phone_number': phoneNumber}),
+      );
+
+      if (kDebugMode) {
+        print('--- DÉBOGAGE DE LA RÉPONSE API ---');
+        print('Statut HTTP reçu: ${response.statusCode}');
+        print('Corps brut: "${response.body}"');
+        print('Longueur du corps: ${response.body.length}');
+        print('--- FIN DÉBOGAGE ---');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('Requête succès : $responseData');
+        }
+        return responseData;
+      } else {
+        if (kDebugMode) {
+          print(
+            'Échec requête: ${response.reasonPhrase}, ${response.statusCode}',
+          );
+          print('Réponse d\'erreur : $responseData');
+        }
+        return responseData;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur dans getPrintPrice: $e');
+      }
+      throw Exception('Erreur lors de la récupération du prix : $e');
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
 import 'package:cyber_mobile/service/business/models/logiciel.dart';
 import 'package:cyber_mobile/service/business/models/user_perso_infos.dart';
 import 'package:cyber_mobile/service/ui/pages/add_education_page.dart';
@@ -13,9 +14,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart'
     as picker;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
+import '../../../routers.dart';
 import '../../business/models/print_info.dart';
 import 'add_experience_page.dart';
 
@@ -41,6 +44,7 @@ class _CreateCvPageState extends ConsumerState<CreateCvPage> {
   String? selectedPayment; // "airtel" ou "mpesa"
   final TextEditingController dateController = TextEditingController();
   String? selectedMode;
+  bool isLoading = false;
 
   // Données du CV
   final cvData = {
@@ -78,6 +82,8 @@ class _CreateCvPageState extends ConsumerState<CreateCvPage> {
   @override
   Widget build(BuildContext context) {
     var state = ref.watch(cvCtrlProvider);
+    var sessionState = ref.watch(sessionCtrlProvider);
+
     return Scaffold(
       appBar: AppBar(title: Text("Création de CV")),
       body: SafeArea(
@@ -139,153 +145,198 @@ class _CreateCvPageState extends ConsumerState<CreateCvPage> {
               SizedBox(width: 16),
               // Bouton Suivant ou Terminer
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_currentPage < 8) {
-                      if (_currentPage == 0) {
-                        //
-                        if (state.userPersoInfos.name == 'N/A') {
-                          //
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Ajoutez vos informations personnelles',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                child:
+                    isLoading
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
+                          onPressed: () async {
+                            if (_currentPage < 8) {
+                              if (_currentPage == 0) {
+                                //
+                                if (state.userPersoInfos.name == 'N/A') {
+                                  //
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Ajoutez vos informations personnelles',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
 
-                          return;
-                        }
-                        setState(() {
-                          _currentPage++;
-                        });
-                        _controller.animateToPage(
-                          _currentPage,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else if (_currentPage == 1) {
-                        //
-                        if (state.experiences.isEmpty) {
-                          //
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Ajoutez aux moins une experience',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                                  return;
+                                }
+                                setState(() {
+                                  _currentPage++;
+                                });
+                                _controller.animateToPage(
+                                  _currentPage,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else if (_currentPage == 1) {
+                                //
+                                if (state.experiences.isEmpty) {
+                                  //
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Ajoutez aux moins une experience',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
 
-                          return;
-                        }
+                                  return;
+                                }
 
-                        setState(() {
-                          _currentPage++;
-                        });
-                        _controller.animateToPage(
-                          _currentPage,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else if (_currentPage == 2) {
-                        //
-                        if (state.etudes.isEmpty) {
-                          //
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Ajoutez aux moins une etudes',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                                setState(() {
+                                  _currentPage++;
+                                });
+                                _controller.animateToPage(
+                                  _currentPage,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else if (_currentPage == 2) {
+                                //
+                                if (state.etudes.isEmpty) {
+                                  //
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Ajoutez aux moins une etudes',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
 
-                          return;
-                        }
-                        setState(() {
-                          _currentPage++;
-                        });
-                        _controller.animateToPage(
-                          _currentPage,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else if (_currentPage == 4) {
-                        //
-                        if (state.skills.isEmpty) {
-                          //
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Ajoutez aux moins une competences',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                                  return;
+                                }
+                                setState(() {
+                                  _currentPage++;
+                                });
+                                _controller.animateToPage(
+                                  _currentPage,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else if (_currentPage == 4) {
+                                //
+                                if (state.skills.isEmpty) {
+                                  //
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Ajoutez aux moins une competences',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
 
-                          return;
-                        }
+                                  return;
+                                }
 
-                        setState(() {
-                          _currentPage++;
-                        });
-                        _controller.animateToPage(
-                          _currentPage,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else if (_currentPage == 5) {
-                        //
-                        if (state.languages.isEmpty) {
-                          //
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Ajoutez aux moins une langue',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                                setState(() {
+                                  _currentPage++;
+                                });
+                                _controller.animateToPage(
+                                  _currentPage,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else if (_currentPage == 5) {
+                                //
+                                if (state.languages.isEmpty) {
+                                  //
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Ajoutez aux moins une langue',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
 
-                          return;
-                        }
+                                  return;
+                                }
 
-                        setState(() {
-                          _currentPage++;
-                        });
-                        _controller.animateToPage(
-                          _currentPage,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else {
-                        setState(() {
-                          _currentPage++;
-                        });
-                        _controller.animateToPage(
-                          _currentPage,
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    } else {
-                      if (kDebugMode) {
-                        print("CV final : $cvData");
-                      }
-                    }
-                  },
-                  child: Text(
-                    _currentPage == 8 ? "Terminer" : "Suivant",
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                ),
+                                setState(() {
+                                  _currentPage++;
+                                });
+                                _controller.animateToPage(
+                                  _currentPage,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else if (_currentPage == 8) {
+                                //
+                                setState(() {
+                                  isLoading = true;
+                                });
+
+                                final data = PrintInfo(
+                                  key: selectedMode!,
+                                  pages: '1',
+                                  sessionId: sessionState.userData.sessionId,
+                                );
+
+                                final ctrl = ref.watch(
+                                  paymentCtrlProvider.notifier,
+                                );
+
+                                final result = await ctrl.getPrintPriceInfos(data);
+
+                                if (!context.mounted) return;
+
+                                final isSuccess = result['status'] == 'OK';
+                                final message =
+                                    result['message'] ?? 'Opération terminée.';
+
+                                if (isSuccess) {
+                                  setState(() => isLoading = false);
+                                  ///TODO: push preview cv page
+                                } else {
+                                  setState(() => isLoading = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        message,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } else {
+                                setState(() {
+                                  _currentPage++;
+                                });
+                                _controller.animateToPage(
+                                  _currentPage,
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            } else {
+                              if (kDebugMode) {
+                                print("CV final : $cvData");
+                              }
+                            }
+                          },
+                          child: Text(
+                            _currentPage == 8 ? "Terminer" : "Suivant",
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
+                        ),
               ),
             ],
           ),

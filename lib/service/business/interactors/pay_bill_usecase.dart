@@ -5,7 +5,7 @@ class PayBillUseCase {
 
   PayBillUseCase(this._documentService);
 
-  Future<dynamic> execute() {
-    return _documentService.payBill();
+  Future<dynamic> execute(String ref, String phoneNumber, String sessionId) {
+    return _documentService.payBill(ref, phoneNumber, sessionId);
   }
 }

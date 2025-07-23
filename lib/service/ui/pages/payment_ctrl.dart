@@ -13,37 +13,35 @@ class PaymentCtrl extends _$PaymentCtrl {
     return PaymentState();
   }
 
-  Future<Map<String, dynamic>> getPriceInfos(PrintInfo data) async {
-    //
+  Future<Map<String, dynamic>> getPrintPriceInfos(PrintInfo data) async {
     state = state.copyWith(isLoading: true);
 
-    var usecase = ref.watch(documentInteractorProvider).getPrintInfosUseCase;
+    final usecase = ref.watch(documentInteractorProvider).getPrintInfosUseCase;
 
     try {
-      //
-      var res = await usecase.execute(data);
+      final res = await usecase.execute(data);
+      final status = res['status'];
 
-      if (res['status'] == 'OK') {
-        //
-        state = state.copyWith(dataPrintInfos: data, isLoading: false);
-        return {'status:': 'OK', 'message': res['message']};
-      } else if (res['status'] == 'KO') {
-        state = state.copyWith(isLoading: false);
-
-        return {'status:': 'KO', 'message': res['message']};
+      if (status == 'OK') {
+        state = state.copyWith(
+          dataPrintInfos: data,
+          isLoading: false,
+          reference: res['reference'],
+          montant: res['montant'],
+        );
+        return {'status': 'OK', 'message': res['message']};
       } else {
         state = state.copyWith(isLoading: false);
-        return {'status:': 'KP', 'message': 'Echec'};
+        return {'status': 'KO', 'message': res['message'] ?? 'Echec'};
       }
     } catch (e) {
-      //
-      String msg =
+      final msg =
           e.toString().contains('Exception:')
               ? e.toString().replaceFirst('Exception: ', '')
               : 'Erreur inattendue: ${e.toString()}';
 
       if (kDebugMode) {
-        print('step-echec-04 : ${e.toString()}');
+        print('step-echec-04 : $msg');
       }
 
       state = state.copyWith(isLoading: false);
@@ -51,20 +49,25 @@ class PaymentCtrl extends _$PaymentCtrl {
     }
   }
 
-  Future<Map<String, dynamic>> checkPayment(String refe, String sId) async {
+  Future<Map<String, dynamic>> checkPayment(String sId) async {
+    state = state.copyWith(isLoading: true);
     //
     var usecase = ref.watch(documentInteractorProvider).checkPaymentUseCase;
 
     try {
       //
-      var res = await usecase.execute(refe, sId);
+      var res = await usecase.execute(state.reference, sId);
 
       if (res['status'] == 'OK') {
         //
-        state = state.copyWith(reference: refe, sessionId: sId);
-      }
+        state = state.copyWith(isLoading: false);
 
-      return {'status:': 'OK', 'message': res['message']};
+        return {'status:': 'OK', 'message': res['message']};
+      } else {
+        //
+        state = state.copyWith(isLoading: false);
+        return {'status:': 'KO', 'message': res['message']};
+      }
     } catch (e) {
       //
       String msg =
@@ -79,9 +82,11 @@ class PaymentCtrl extends _$PaymentCtrl {
     }
   }
 
-  Future<Map<String, dynamic>> payBill() async {
-    ///TODO: Faire la requete du paybill
+  Future<void> payBill(String phoneNumber, String sId) async {
+    state = state.copyWith(isLoading: true);
 
-    return {'status': 'braa'};
+    final usecase = ref.watch(documentInteractorProvider).payBillUseCase;
+
+    await usecase.execute(state.reference, phoneNumber, sId);
   }
 }

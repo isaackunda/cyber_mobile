@@ -1,13 +1,12 @@
 import 'dart:io';
 
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
+import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pdfx/pdfx.dart';
-
-import '../../../routers.dart';
 
 class PaymentPrintServicePage extends ConsumerStatefulWidget {
   const PaymentPrintServicePage({super.key});
@@ -19,8 +18,6 @@ class PaymentPrintServicePage extends ConsumerStatefulWidget {
 class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
   String? selectedPayment; // "airtel" ou "mpesa"
   // Variables d'état pour gérer le fichier sélectionné et la progression
-  String? _selectedFilePath;
-  String? _selectedFileName;
   PdfController? _previewController;
 
   @override
@@ -107,6 +104,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        var state = ref.watch(sessionCtrlProvider);
         return SafeArea(
           child: Padding(
             padding: EdgeInsets.only(
@@ -161,6 +159,9 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                       return;
                     }
 
+                    var ctrl = ref.watch(paymentCtrlProvider.notifier);
+                    ctrl.payBill(number, state.userData.sessionId);
+
                     // Logique de paiement ici
                     Navigator.pop(context); // Ferme le sheet
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -171,6 +172,8 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                         ),
                       ),
                     );
+
+                    ctrl.checkPayment(state.userData.sessionId);
                   },
                   icon: const Icon(Icons.payment),
                   label: const Text(
@@ -197,6 +200,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
   @override
   Widget build(BuildContext context) {
     var state = ref.watch(uploadWorkCtrlProvider);
+    var payState = ref.watch(paymentCtrlProvider);
     return Scaffold(
       appBar: AppBar(title: Text('Paiement')),
       body: SafeArea(
@@ -264,7 +268,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                     children: [
                       Text('CommandeID'),
                       Text(
-                        '#123456',
+                        payState.reference,
                         style: TextStyle(
                           //fontSize: 16,
                           fontFamily: 'Poppins',
@@ -294,7 +298,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                     children: [
                       Text('Total'),
                       Text(
-                        '\$20.00',
+                        payState.montant,
                         style: TextStyle(
                           //fontSize: 16,
                           fontFamily: 'Poppins',
@@ -354,13 +358,16 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                 ],
               ),*/
               SizedBox(height: 24.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    //context.pushNamed(Urls.previewCover.name);
-                    // Afficher le nouveau banner
-                    /*if (selectedPayment == null) {
+
+              payState.isLoading
+                  ? CircularProgressIndicator()
+                  : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        //context.pushNamed(Urls.previewCover.name);
+                        // Afficher le nouveau banner
+                        /*if (selectedPayment == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
@@ -375,20 +382,20 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                       );
                       return;
                     }*/
-                    _showPaymentBottomSheet(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+                        _showPaymentBottomSheet(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: const Text(
+                        'Proceder aux paiement',
+                        style: TextStyle(fontFamily: 'Poppins'),
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Proceder aux paiement',
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                ),
-              ),
             ],
           ),
         ),

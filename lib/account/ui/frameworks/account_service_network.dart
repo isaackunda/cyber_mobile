@@ -14,90 +14,41 @@ class AccountServiceNetwork implements AccountService {
 
   @override
   Future<dynamic> login(String email) async {
-    /*final uri = Uri.parse(
-      'https://odigroup.cd/cbmplus/api/auth/login/request-otp?email=$email',
-    );*/
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://odigroup.cd/cbmplus/api/auth/login/request-otp'),
-        body: {'email': email},
-      );
-      //
-      //final response = await http.get(uri);
-
-      if (kDebugMode) {
-        print('--- DÉBOGAGE DE LA RÉPONSE API ---');
-        //print('URL de la requête: $uri');
-        print('Statut HTTP reçu: ${response.statusCode}');
-        print(
-          'Corps de la réponse brut du serveur: "${response.body}"',
-        ); // <<< REGARDEZ ICI !!!
-        print('Longueur du corps: ${response.body.length}');
-        print('--- FIN DÉBOGAGE ---');
-      }
-
-      if (kDebugMode) {
-        print('c\'est dohi');
-      }
-      if (response.statusCode == 200) {
-        // Successfully registered the email
-        if (kDebugMode) {
-          print('Email registered successfully: $email');
-        }
-
-        var data = jsonDecode(response.body);
-        return Future.value(data);
-      } else {
-        // Handle the error response
-        if (kDebugMode) {
-          print(
-            'Failed to register email: ${response.reasonPhrase}, ${response.statusCode}',
-          );
-        }
-        var data = jsonDecode(response.body);
-        if (kDebugMode) {
-          print('object: $data');
-        }
-        return Future.value(data);
-      }
-    } catch (e) {
-      // Handle any exceptions that may occur during the registration process
-      if (kDebugMode) {
-        print('step-echec-05');
-      }
-      throw Exception('Failed to register email: $e');
-    }
-
-    /*final uri = Uri.http(
-      'https://odigroup.cd/cbmplus',
-      '/api/auth/login/request-otp ',
-      {'email': email},
+    final uri = Uri.parse(
+      'https://odigroup.cd/cbmplus/api/auth/login/request-otp/',
     );
 
     try {
-      //
-      final response = await http.get(uri);
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
 
-      if (response.statusCode == 200) {
-        // Successfully registered the email
-        if (kDebugMode) {
-          print('Email registered successfully: $email');
-        }
-        var data = jsonDecode(response.body);
-        return Future.value(data);
+      if (kDebugMode) {
+        print('--- DÉBOGAGE DE LA RÉPONSE API ---');
+        print('Statut HTTP: ${response.statusCode}');
+        print('Réponse: ${response.body}');
+        print('--- FIN DÉBOGAGE ---');
+      }
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        return data;
       } else {
-        // Handle the error response
-        if (kDebugMode) {
-          print('Failed to register email: ${response.reasonPhrase}');
+        try {
+          final data = jsonDecode(response.body);
+          return data;
+        } catch (_) {
+          return {'error': 'Erreur serveur inattendue'};
         }
-        var data = jsonDecode(response.body);
-        return Future.value(data);
       }
     } catch (e) {
-      // Handle any exceptions that may occur during the registration process
-      throw Exception('Failed to register email: $e');
-    }*/
+      if (kDebugMode) {
+        print('Exception réseau: $e');
+      }
+      throw Exception('Échec de la requête: $e');
+    }
   }
 
   @override
@@ -106,14 +57,9 @@ class AccountServiceNetwork implements AccountService {
       //
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/auth/login/verify-otp/'),
-        body: {'email': email, 'otp': otp},
-      );
-
-      /*final response = await http.post(
-        Uri.http('https://odigroup.cd/cbmplus', '/api/auth/login/verify-otp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'otp': otp}),
-      );*/
+      );
 
       if (response.statusCode == 200) {
         // Successfully registered the email
@@ -155,11 +101,10 @@ class AccountServiceNetwork implements AccountService {
 
     try {
       final response = await http.post(
-        Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/request-otp'),
-        body: {'email': email},
+        Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/request-otp/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
       );
-      //
-      //final response = await http.get(uri);
 
       if (kDebugMode) {
         print('--- DÉBOGAGE DE LA RÉPONSE API ---');
@@ -210,7 +155,8 @@ class AccountServiceNetwork implements AccountService {
     try {
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/verify-otp/'),
-        body: {'email': email, 'otp': otp},
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
       );
       //
       //final response = await http.get(uri);
@@ -259,7 +205,7 @@ class AccountServiceNetwork implements AccountService {
     }
   }
 
-  Future<dynamic> verifyOtpAndRegister2(String email, String otp) async {
+  /*Future<dynamic> verifyOtpAndRegister2(String email, String otp) async {
     //
 
     final uri = Uri.https(
@@ -350,19 +296,20 @@ class AccountServiceNetwork implements AccountService {
       // Handle any exceptions that may occur during the registration process
       throw Exception('Failed to register email: $e');
     }
-  }
+  }*/
 
   @override
   Future<dynamic> registerAccount(RegisterRequest user) async {
     final response = await http.post(
       Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/complete/'),
-      body: {
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'email': user.email,
         'nom': user.name,
         'prenom': user.firstname,
         'universite': user.university,
         'telephone': user.phoneNumber,
-      },
+      }),
     );
 
     if (kDebugMode) {

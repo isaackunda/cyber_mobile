@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -10,14 +11,14 @@ import 'package:pdfx/pdfx.dart';
 
 import '../../../routers.dart';
 
-class PaymentPage extends ConsumerStatefulWidget {
-  const PaymentPage({super.key});
+class PrintPaymentPage extends ConsumerStatefulWidget {
+  const PrintPaymentPage({super.key});
 
   @override
-  ConsumerState<PaymentPage> createState() => _PaymentPageState();
+  ConsumerState<PrintPaymentPage> createState() => _PrintPaymentPageState();
 }
 
-class _PaymentPageState extends ConsumerState<PaymentPage> {
+class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
   String? selectedPayment; // "airtel" ou "mpesa"
   // Variables d'état pour gérer le fichier sélectionné et la progression
   String? _selectedFilePath;
@@ -169,6 +170,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     var state = ref.watch(uploadWorkCtrlProvider);
+    var payState = ref.watch(paymentCtrlProvider);
     return Scaffold(
       appBar: AppBar(title: Text('Paiement')),
       body: SafeArea(
@@ -221,9 +223,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('CommandeID'),
+                      Text('Ref'),
                       Text(
-                        '#123456',
+                        payState.reference,
                         style: TextStyle(
                           //fontSize: 16,
                           fontFamily: 'Poppins',
@@ -238,7 +240,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                     children: [
                       Text('Total'),
                       Text(
-                        '\$20.00',
+                        payState.montant,
                         style: TextStyle(
                           //fontSize: 16,
                           fontFamily: 'Poppins',

@@ -479,7 +479,7 @@ class _CoverPageState extends ConsumerState<CoverPage> {
                                       paymentCtrlProvider.notifier,
                                     );
 
-                                    final result = await ctrl.getPriceInfos(
+                                    final result = await ctrl.getPrintPriceInfos(
                                       data,
                                     );
 

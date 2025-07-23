@@ -1,6 +1,10 @@
 import 'package:cyber_mobile/account/ui/pages/login_ctrl.dart';
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../routers.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -14,7 +18,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    var state = ref.watch(loginCtrlProvider);
+    var state = ref.watch(sessionCtrlProvider);
+
     return Scaffold(
       appBar: AppBar(title: Text('Profil')),
       body: SingleChildScrollView(
@@ -44,7 +49,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                     SizedBox(height: 12.0),
                     Text(
-                      '${state.firstName} ${state.name}',
+                      '${state.userData.firstname} ${state.userData.name}',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -53,7 +58,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ),
                     Text(
-                      '${state.email}',
+                      state.userData.email,
                       style: TextStyle(
                         fontSize: 17,
                         //fontWeight: FontWeight.w800,
@@ -62,7 +67,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ),
                     Text(
-                      '${state.phoneNumber}',
+                      state.userData.phoneNumber,
                       style: TextStyle(
                         fontSize: 17,
                         //fontWeight: FontWeight.w800,
@@ -196,7 +201,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ),
                       ),
                       Spacer(),
-                      Icon(Icons.arrow_forward),
+                      GestureDetector(
+                        onTap: () async {
+                          var ctrl = ref.read(sessionCtrlProvider.notifier);
+                          await ctrl.clearSession();
+
+                          if (!context.mounted) return;
+
+                          context.pushReplacementNamed(Urls.auth.name);
+                        },
+                        child: Icon(Icons.arrow_forward),
+                      ),
                     ],
                   ),
                   SizedBox(height: 24.0),

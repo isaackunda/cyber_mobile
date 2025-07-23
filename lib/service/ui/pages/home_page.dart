@@ -1,6 +1,8 @@
 import 'package:cyber_mobile/account/ui/pages/login_ctrl.dart';
 import 'package:cyber_mobile/account/ui/pages/register_account_ctrl.dart';
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
 import 'package:cyber_mobile/routers.dart';
+import 'package:cyber_mobile/service/ui/pages/cv_ctrl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +38,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var state = ref.watch(loginCtrlProvider);
+    var state = ref.watch(sessionCtrlProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -65,7 +67,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             children: [
               //SizedBox(height: 24),
               Text(
-                'Bienvenue, ${state.firstName}!',
+                'Bienvenue, ${state.userData.firstname}!',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
