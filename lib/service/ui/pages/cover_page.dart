@@ -1,4 +1,5 @@
 import 'package:cyber_mobile/account/ui/pages/register_account_ctrl.dart';
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
 import 'package:cyber_mobile/service/business/models/cover_page_model.dart';
 import 'package:cyber_mobile/service/ui/pages/cover_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/cv_ctrl.dart';
@@ -88,6 +89,7 @@ class _CoverPageState extends ConsumerState<CoverPage> {
   Widget build(BuildContext context) {
     var state = ref.watch(registerAccountCtrlProvider);
     var coverPageState = ref.watch(coverCtrlProvider);
+    var sessionState = ref.watch(sessionCtrlProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text('Page de garde')),
@@ -315,8 +317,9 @@ class _CoverPageState extends ConsumerState<CoverPage> {
                   TextFormField(
                     //controller: emailCtrl,
                     enabled: false,
+                    initialValue: sessionState.userData.university,
                     decoration: InputDecoration(
-                      labelText: '${state.university}',
+                      labelText: sessionState.userData.university,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
@@ -414,6 +417,7 @@ class _CoverPageState extends ConsumerState<CoverPage> {
             builder: (context, setState) {
               final state = ref.watch(paymentCtrlProvider);
               final uploadState = ref.watch(uploadWorkCtrlProvider);
+              var sessionState = ref.watch(sessionCtrlProvider);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(
@@ -472,16 +476,15 @@ class _CoverPageState extends ConsumerState<CoverPage> {
                                     final data = PrintInfo(
                                       key: selectedMode!,
                                       pages: '1',
-                                      sessionId: state.sessionId.toString(),
+                                      sessionId: sessionState.userData.sessionId,
                                     );
 
                                     final ctrl = ref.watch(
                                       paymentCtrlProvider.notifier,
                                     );
 
-                                    final result = await ctrl.getPrintPriceInfos(
-                                      data,
-                                    );
+                                    final result = await ctrl
+                                        .getPrintPriceInfos(data);
 
                                     if (!context.mounted) return;
 

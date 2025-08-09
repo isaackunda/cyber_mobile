@@ -6,7 +6,7 @@ part of 'session_ctrl.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sessionCtrlHash() => r'634823b011dfa449c69b43c5272e01a16be27e86';
+String _$sessionCtrlHash() => r'8d857f17efebae28114d6a3ad6c198f7ff7dc341';
 
 /// See also [SessionCtrl].
 @ProviderFor(SessionCtrl)

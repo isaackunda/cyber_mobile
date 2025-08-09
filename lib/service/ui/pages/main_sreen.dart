@@ -4,6 +4,7 @@ import 'package:cyber_mobile/service/ui/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Si tu as besoin de Riverpod ici
 import 'home_page.dart';
+import 'order_ctrl.dart';
 import 'orders_page.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (index == 1) {
+      // remplace "1" par l’index correct de l’onglet "Commandes"
+      var ctrl = ref.read(orderCtrlProvider.notifier);
+      ctrl.getAllOrders();
+    }
   }
 
   @override

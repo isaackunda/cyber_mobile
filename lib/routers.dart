@@ -82,7 +82,7 @@ GoRouter router(ref) {
   }
 
   return GoRouter(
-    initialLocation: '/main',
+    initialLocation: '/intro',
     navigatorKey: navigatorKey,
     redirect: (context, state) async {
       //

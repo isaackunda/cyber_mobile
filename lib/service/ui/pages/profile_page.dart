@@ -1,5 +1,8 @@
 import 'package:cyber_mobile/account/ui/pages/login_ctrl.dart';
 import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
+import 'package:cyber_mobile/main.dart';
+import 'package:cyber_mobile/theme.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +20,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool isDark = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Theme.of(context).brightness == Brightness.dark) {
+        //
+        setState(() {
+          isDark = true;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     var state = ref.watch(sessionCtrlProvider);
 
@@ -31,8 +48,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 child: Column(
                   //crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: 24.0),
-                    SizedBox(height: 24.0),
+                    SizedBox(height: 8.0),
                     Container(
                       width: 100.0,
                       height: 100.0,
@@ -105,14 +121,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       //
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color.fromRGBO(30, 30, 31, 1),
+                          //color: const Color.fromRGBO(30, 30, 31, 1),
                           borderRadius: BorderRadius.circular(63),
                         ),
                         child: Icon(Icons.room_preferences_outlined),
                       ),
                       SizedBox(width: 12.0),
                       Text(
-                        'Preferences',
+                        'Mode Sombre',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           overflow:
@@ -120,23 +136,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ),
                       ),
                       Spacer(),
-                      //Icon(Icons.arrow_forward),
-                      Checkbox(
+                      CupertinoSwitch(
+                        activeColor: Colors.red,
                         value: isDark,
                         onChanged: (val) {
-                          isDark = val!;
+                          setState(() {
+                            isDark = val;
+                            isDark
+                                ? themeManager.setTheme(ThemeMode.dark)
+                                : themeManager.setTheme(ThemeMode.light);
+                          });
                         },
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.0),
-                  Row(
+                  //SizedBox(height: 16.0),
+                  /*Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       //
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color.fromRGBO(30, 30, 31, 1),
+                          //color: const Color.fromRGBO(30, 30, 31, 1),
                           borderRadius: BorderRadius.circular(63),
                         ),
                         child: Icon(Icons.monetization_on_outlined),
@@ -153,7 +174,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       Spacer(),
                       Icon(Icons.arrow_forward),
                     ],
-                  ),
+                  ),*/
                   SizedBox(height: 16.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -161,7 +182,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       //
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color.fromRGBO(30, 30, 31, 1),
+                          //color: const Color.fromRGBO(30, 30, 31, 1),
                           borderRadius: BorderRadius.circular(63),
                         ),
                         child: Icon(Icons.help_outline),
@@ -186,7 +207,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       //
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color.fromRGBO(30, 30, 31, 1),
+                          //color: const Color.fromRGBO(30, 30, 31, 1),
                           borderRadius: BorderRadius.circular(63),
                         ),
                         child: Icon(Icons.exit_to_app),
@@ -214,10 +235,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 24.0),
+                  SizedBox(height: 48.0),
                   Container(
                     padding: EdgeInsets.all(16),
-                    margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    //margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.red, width: 2),
                       borderRadius: BorderRadius.circular(12),

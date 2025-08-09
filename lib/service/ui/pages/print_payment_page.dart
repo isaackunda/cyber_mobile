@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
+import 'package:cyber_mobile/service/ui/pages/order_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:flutter/cupertino.dart';
@@ -29,49 +31,41 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
   void initState() {
     super.initState();
     // Vous pouvez initialiser des valeurs par défaut si nécessaire
-  }
 
-  void _selectPayment(String payment) {
-    setState(() {
-      selectedPayment = payment;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPreviewPdf();
     });
   }
 
-  Widget _buildPaymentButton(String label, String value, Color color) {
-    final isSelected = selectedPayment == value;
+  Future<void> _loadPreviewPdf() async {
+    // Libère l'ancien controller s'il existe déjà
+    var state = ref.watch(uploadWorkCtrlProvider);
+    var orderState = ref.watch(orderCtrlProvider);
+    if (kDebugMode) {
+      print('object ${state.filepath}');
+    }
 
-    return GestureDetector(
-      onTap: () => _selectPayment(value),
-      child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color : null,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color:
-                isSelected
-                    ? color
-                    : (Theme.of(context).brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: isSelected ? Colors.white : null,
-          ),
-        ),
-      ),
-    );
+    try {
+      _previewController?.dispose();
+    } catch (_) {}
+
+    if (await File(state.filepath).exists()) {
+      setState(() {
+        _previewController = PdfController(
+          document: PdfDocument.openFile(orderState.order.link),
+        );
+      });
+      // ok
+    } else {
+      if (kDebugMode) {
+        print('⚠️ Le fichier PDF n’existe pas à ${state.filepath}');
+      }
+    }
   }
 
-  void _showPaymentBottomSheet(BuildContext context, String method) {
+  void _showPaymentBottomSheet(BuildContext context) {
     final TextEditingController phoneController = TextEditingController();
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
@@ -80,87 +74,147 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    'Paiement via mobile',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Entrez votre numéro de téléphone :',
-                  style: TextStyle(fontFamily: 'Poppins'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    //hintText: '0990000000',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    final number = phoneController.text.trim();
-                    if (number.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Veuillez entrer un numéro valide',
-                            style: TextStyle(fontFamily: 'Poppins'),
-                          ),
-                        ),
-                      );
-                      return;
-                    }
+        var sessionState = ref.watch(sessionCtrlProvider);
+        var payState = ref.watch(paymentCtrlProvider);
 
-                    // Logique de paiement ici
-                    Navigator.pop(context); // Ferme le sheet
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Paiement en cours via $method pour $number',
-                          style: TextStyle(fontFamily: 'Poppins'),
+        return SafeArea(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Paiement via mobile',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
                         ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.payment),
-                  label: const Text(
-                    'Payer',
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        8,
-                      ), // ⬅️ Coins arrondis
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Entrez votre numéro de téléphone :',
+                      style: TextStyle(fontFamily: 'Poppins'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        //hintText: '0990000000',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    isLoading
+                        ? Center(child: CircularProgressIndicator())
+                        : ElevatedButton.icon(
+                          onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
+
+                            final number = phoneController.text.trim();
+                            if (number.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Veuillez entrer un numéro valide',
+                                    style: TextStyle(fontFamily: 'Poppins'),
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            var ctrl = ref.watch(paymentCtrlProvider.notifier);
+                            ctrl.payBill(
+                              number,
+                              sessionState.userData.sessionId,
+                            );
+
+                            var result = await ctrl.checkPayment(
+                              sessionState.userData.sessionId,
+                            );
+
+                            if (!context.mounted) return;
+
+                            String messageToShow =
+                                result['message'] ?? 'Opération terminée.';
+                            bool isSucess = result['status'] == 'OK';
+                            bool pending = result['status'] == 'NOK';
+
+                            if (isSucess) {
+                              setState(() {
+                                isLoading = false;
+                              });
+
+                              /*var orderCtrl = ref.read(
+                                orderCtrlProvider.notifier,
+                              );
+                              await orderCtrl.updateOrder(payState.reference);
+
+                              if (!context.mounted) return;*/
+
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    messageToShow,
+                                    style: TextStyle(fontFamily: 'Poppins'),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              setState(() {
+                                isLoading = false;
+                              });
+                              Navigator.pop(context); //
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    messageToShow,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.payment),
+                          label: const Text(
+                            'Payer',
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                8,
+                              ), // ⬅️ Coins arrondis
+                            ),
+                          ),
+                        ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },
@@ -169,8 +223,8 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    var state = ref.watch(uploadWorkCtrlProvider);
-    var payState = ref.watch(paymentCtrlProvider);
+    var orderState = ref.watch(orderCtrlProvider);
+
     return Scaffold(
       appBar: AppBar(title: Text('Paiement')),
       body: SafeArea(
@@ -196,17 +250,30 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
               ), // Ajouter un peu d'espace après le titre Aperçu
               // *** C'EST ICI QUE L'APERÇU DU DOCUMENT EST PLACÉ ***
               // Afficher l'aperçu si un chemin de fichier est disponible
-              Container(
-                height: 300,
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(8.0),
-                  color: Colors.grey[200],
-                ),
-                child: Center(child: Text('CoverPage')),
-              ),
+              _previewController == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : Container(
+                    height: 300,
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey, width: 1.0),
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Colors.grey[200],
+                    ),
+                    child: PdfView(
+                      physics: BouncingScrollPhysics(),
+                      controller: _previewController!,
+                      builders: PdfViewBuilders<DefaultBuilderOptions>(
+                        options: const DefaultBuilderOptions(),
+                        pageLoaderBuilder:
+                            (_) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                      ),
+                      scrollDirection: Axis.vertical,
+                    ),
+                  ),
               SizedBox(height: 6.0),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,9 +290,12 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Ref'),
                       Text(
-                        payState.reference,
+                        'CommandeID',
+                        style: TextStyle(fontFamily: 'Poppins'),
+                      ),
+                      Text(
+                        orderState.order.ref,
                         style: TextStyle(
                           //fontSize: 16,
                           fontFamily: 'Poppins',
@@ -238,9 +308,9 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total'),
+                      Text('Total', style: TextStyle(fontFamily: 'Poppins')),
                       Text(
-                        payState.montant,
+                        orderState.order.total,
                         style: TextStyle(
                           //fontSize: 16,
                           fontFamily: 'Poppins',
@@ -252,61 +322,11 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                 ],
               ),
               SizedBox(height: 24.0),
-              /*Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Mode de paiement',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 24.0),
-                  Row(
-                    //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // const Text("Choisissez votre mode de paiement", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      _buildPaymentButton(
-                        "Airtel",
-                        "airtel money",
-                        Theme.of(context).colorScheme.primary,
-                      ),
-                      SizedBox(width: 16.0),
-                      _buildPaymentButton(
-                        "M-Pesa",
-                        "m-pesa",
-                        Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.0),
-                ],
-              ),*/
-              SizedBox(height: 24.0),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    //context.pushNamed(Urls.previewCover.name);
-                    // Afficher le nouveau banner
-                    /*if (selectedPayment == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Veuillez sélectionner un mode de paiement',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }*/
-                    _showPaymentBottomSheet(context, selectedPayment!);
+                    _showPaymentBottomSheet(context);
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),

@@ -155,12 +155,16 @@ class DocumentServiceNetwork implements DocumentService {
   }
 
   @override
-  Future<dynamic> payBill(String ref, String phoneNumber, String sessionId) async {
+  Future<dynamic> payBill(
+    String ref,
+    String phoneNumber,
+    String sessionId,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/cart/print/pay-bill/'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'reference': ref, 'phone_number': phoneNumber}),
+        body: jsonEncode({'reference': ref, 'phone': phoneNumber, 'sessionID': sessionId}),
       );
 
       if (kDebugMode) {

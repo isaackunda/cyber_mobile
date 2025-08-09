@@ -42,22 +42,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            //const Spacer(),
-            //SizedBox(width: 50),
-            //Image.asset('images/logo-08.png', width: 30, height: 30),
-            Text('Cyber Mobile +'),
-            //const Spacer(),
-            /*IconButton(
-              icon: Icon(Icons.settings, color: Colors.white),
-              onPressed: () {
-                // Action à faire quand tu cliques sur la lune
-              },
-            ),*/
-          ],
-        ),
+        title: Text('Cyber Mobile +'),
       ),
       body: SafeArea(
         child: Padding(

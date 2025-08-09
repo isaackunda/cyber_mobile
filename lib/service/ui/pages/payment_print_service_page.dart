@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
+import 'package:cyber_mobile/service/business/models/order.dart';
+import 'package:cyber_mobile/service/ui/pages/order_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +28,20 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
     // Important : exécuter après le rendu initial
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPreviewPdf();
+      var state = ref.watch(uploadWorkCtrlProvider);
+
+      var ctrl = ref.read(orderCtrlProvider.notifier);
+      var payState = ref.watch(paymentCtrlProvider);
+
+      var data = Order(
+        ref: payState.reference,
+        status: 'en attente',
+        total: payState.montant,
+        nbreDePages: state.selectedPages.length.toString(),
+        link: state.filepath,
+      );
+
+      ctrl.addOrder(data);
     });
     // Vous pouvez initialiser des valeurs par défaut si nécessaire
   }
@@ -55,47 +71,9 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
     }
   }
 
-  void _selectPayment(String payment) {
-    setState(() {
-      selectedPayment = payment;
-    });
-  }
-
-  Widget _buildPaymentButton(String label, String value, Color color) {
-    final isSelected = selectedPayment == value;
-
-    return GestureDetector(
-      onTap: () => _selectPayment(value),
-      child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color : null,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color:
-                isSelected
-                    ? color
-                    : (Theme.of(context).brightness == Brightness.light
-                        ? Colors.black
-                        : Colors.white),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: isSelected ? Colors.white : null,
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showPaymentBottomSheet(BuildContext context) {
     final TextEditingController phoneController = TextEditingController();
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
@@ -106,91 +84,145 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
       builder: (context) {
         var state = ref.watch(sessionCtrlProvider);
         return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    'Paiement via mobile',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Entrez votre numéro de téléphone :',
-                  style: TextStyle(fontFamily: 'Poppins'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    //hintText: '0990000000',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    final number = phoneController.text.trim();
-                    if (number.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Veuillez entrer un numéro valide',
-                            style: TextStyle(fontFamily: 'Poppins'),
-                          ),
-                        ),
-                      );
-                      return;
-                    }
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              var payState = ref.watch(paymentCtrlProvider);
 
-                    var ctrl = ref.watch(paymentCtrlProvider.notifier);
-                    ctrl.payBill(number, state.userData.sessionId);
-
-                    // Logique de paiement ici
-                    Navigator.pop(context); // Ferme le sheet
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Paiement en cours pour $number',
-                          style: TextStyle(fontFamily: 'Poppins'),
+              return Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Paiement via mobile',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
                         ),
                       ),
-                    );
-
-                    ctrl.checkPayment(state.userData.sessionId);
-                  },
-                  icon: const Icon(Icons.payment),
-                  label: const Text(
-                    'Payer',
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        8,
-                      ), // ⬅️ Coins arrondis
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Entrez votre numéro de téléphone :',
+                      style: TextStyle(fontFamily: 'Poppins'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        //hintText: '0990000000',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    isLoading
+                        ? Center(child: CircularProgressIndicator())
+                        : ElevatedButton.icon(
+                          onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
+
+                            final number = phoneController.text.trim();
+                            if (number.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Veuillez entrer un numéro valide',
+                                    style: TextStyle(fontFamily: 'Poppins'),
+                                  ),
+                                ),
+                              );
+                              setState(() {
+                                isLoading = false;
+                              });
+                              return;
+                            }
+
+                            var ctrl = ref.watch(paymentCtrlProvider.notifier);
+                            var result = await ctrl.payBill(
+                              number,
+                              state.userData.sessionId,
+                            );
+
+                            if (!context.mounted) return;
+
+                            String messageToShow =
+                                result['message'] ?? 'Opération terminée.';
+                            bool isSucess = result['status'] == 'OK';
+                            bool pending = result['status'] == 'NOK';
+
+                            if (isSucess) {
+                              setState(() {
+                                isLoading = false;
+                              });
+
+                              /*var orderCtrl = ref.read(
+                                orderCtrlProvider.notifier,
+                              );
+                              var refe = payState.reference;
+
+                              var result = await orderCtrl.updateOrder(refe);
+                              if (!context.mounted) return;*/
+
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    messageToShow,
+                                    style: TextStyle(fontFamily: 'Poppins'),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              setState(() {
+                                isLoading = false;
+                              });
+                              Navigator.pop(context); //
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    messageToShow,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.payment),
+                          label: const Text(
+                            'Payer',
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                8,
+                              ), // ⬅️ Coins arrondis
+                            ),
+                          ),
+                        ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },
@@ -324,78 +356,30 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                   ),
                 ],
               ),
-              SizedBox(height: 24.0),
-              /*Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Mode de paiement',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 24.0),
-                  Row(
-                    //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // const Text("Choisissez votre mode de paiement", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      _buildPaymentButton(
-                        "Airtel",
-                        "airtel money",
-                        Theme.of(context).colorScheme.primary,
-                      ),
-                      SizedBox(width: 16.0),
-                      _buildPaymentButton(
-                        "M-Pesa",
-                        "m-pesa",
-                        Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16.0),
-                ],
-              ),*/
+              //SizedBox(height: 24.0),
               SizedBox(height: 24.0),
 
-              payState.isLoading
-                  ? CircularProgressIndicator()
-                  : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        //context.pushNamed(Urls.previewCover.name);
-                        // Afficher le nouveau banner
-                        /*if (selectedPayment == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Veuillez sélectionner un mode de paiement',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              color: Colors.white,
+              SizedBox(
+                width: double.infinity,
+                child:
+                    payState.isLoading
+                        ? CircularProgressIndicator()
+                        : ElevatedButton(
+                          onPressed: () async {
+                            _showPaymentBottomSheet(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
-                          backgroundColor: Colors.red,
+                          child: const Text(
+                            'Proceder aux paiement',
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
                         ),
-                      );
-                      return;
-                    }*/
-                        _showPaymentBottomSheet(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: const Text(
-                        'Proceder aux paiement',
-                        style: TextStyle(fontFamily: 'Poppins'),
-                      ),
-                    ),
-                  ),
+              ),
             ],
           ),
         ),
