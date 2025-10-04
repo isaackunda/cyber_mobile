@@ -5,7 +5,7 @@ class LoginUseCase {
 
   LoginUseCase(this._accountService);
 
-  Future<dynamic> execute(String email) {
-    return _accountService.login(email);
+  Future<dynamic> execute(String phone) {
+    return _accountService.login(phone);
   }
 }

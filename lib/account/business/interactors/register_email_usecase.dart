@@ -5,7 +5,7 @@ class RegisterEmailUseCase {
 
   RegisterEmailUseCase(this._accountService);
 
-  Future<dynamic> execute(String email) {
-    return _accountService.registerEmail(email);
+  Future<dynamic> execute(String phone) {
+    return _accountService.registerEmail(phone);
   }
 }

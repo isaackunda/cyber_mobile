@@ -7,6 +7,7 @@ import 'package:cyber_mobile/service/business/interactors/get_cv_templates_useca
 import 'package:cyber_mobile/service/business/interactors/get_cv_usecase.dart';
 import 'package:cyber_mobile/service/business/interactors/get_print_infos_usecase.dart';
 import 'package:cyber_mobile/service/business/interactors/pay_bill_usecase.dart';
+import 'package:cyber_mobile/service/business/interactors/send_file_usecase.dart';
 import 'package:cyber_mobile/service/business/service/document_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -23,6 +24,7 @@ class DocumentInteractor {
   GetPrintInfosUseCase getPrintInfosUseCase;
   CheckPaymentUseCase checkPaymentUseCase;
   PayBillUseCase payBillUseCase;
+  SendFileUseCase sendFileUseCase;
 
   DocumentInteractor._(
     this.getCoverPageTemplatesUseCase,
@@ -34,6 +36,7 @@ class DocumentInteractor {
     this.getPrintInfosUseCase,
     this.checkPaymentUseCase,
     this.payBillUseCase,
+    this.sendFileUseCase,
   );
 
   static DocumentInteractor build(DocumentService service) {
@@ -47,6 +50,7 @@ class DocumentInteractor {
       GetPrintInfosUseCase(service),
       CheckPaymentUseCase(service),
       PayBillUseCase(service),
+      SendFileUseCase(service),
     );
   }
 }

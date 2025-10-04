@@ -13,7 +13,7 @@ class AccountServiceNetwork implements AccountService {
   }
 
   @override
-  Future<dynamic> login(String email) async {
+  Future<dynamic> login(String phone) async {
     final uri = Uri.parse(
       'https://odigroup.cd/cbmplus/api/auth/login/request-otp/',
     );
@@ -22,7 +22,7 @@ class AccountServiceNetwork implements AccountService {
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
+        body: jsonEncode({'phone': phone}),
       );
 
       if (kDebugMode) {
@@ -52,21 +52,21 @@ class AccountServiceNetwork implements AccountService {
   }
 
   @override
-  Future<dynamic> otpLogin(String email, String otp) async {
+  Future<dynamic> otpLogin(String phone, String otp) async {
     try {
       //
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/auth/login/verify-otp/'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'otp': otp}),
+        body: jsonEncode({'phone': phone, 'otp': otp}),
       );
 
       if (response.statusCode == 200) {
         // Successfully registered the email
         var data = jsonDecode(response.body);
         if (kDebugMode) {
-          print('Email registered successfully: $email');
-          print('Compte enregistré avec succès via FormData: $email');
+          print('Email registered successfully: $phone');
+          print('Compte enregistré avec succès via FormData: $phone');
           print('Données reçues: $data');
         }
         return data;
@@ -94,7 +94,7 @@ class AccountServiceNetwork implements AccountService {
   }
 
   @override
-  Future<dynamic> registerEmail(String email) async {
+  Future<dynamic> registerEmail(String phone) async {
     /*final uri = Uri.parse(
       'https://odigroup.cd/cbmplus/api/auth/signup/request-otp?email=$email',
     );*/
@@ -103,7 +103,7 @@ class AccountServiceNetwork implements AccountService {
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/request-otp/'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
+        body: jsonEncode({'phone': phone}),
       );
 
       if (kDebugMode) {
@@ -123,7 +123,7 @@ class AccountServiceNetwork implements AccountService {
       if (response.statusCode == 200) {
         // Successfully registered the email
         if (kDebugMode) {
-          print('Email registered successfully: $email');
+          print('Email registered successfully: $phone');
         }
 
         var data = jsonDecode(response.body);
@@ -151,12 +151,12 @@ class AccountServiceNetwork implements AccountService {
   }
 
   @override
-  Future<dynamic> verifyOtpAndRegister(String email, String otp) async {
+  Future<dynamic> verifyOtpAndRegister(String phone, String otp) async {
     try {
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/verify-otp/'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'otp': otp}),
+        body: jsonEncode({'phone': phone, 'otp': otp}),
       );
       //
       //final response = await http.get(uri);
@@ -178,7 +178,7 @@ class AccountServiceNetwork implements AccountService {
       if (response.statusCode == 200) {
         // Successfully registered the email
         if (kDebugMode) {
-          print('Email registered successfully: $email');
+          print('Email registered successfully: $phone');
         }
 
         var data = jsonDecode(response.body);
@@ -304,11 +304,11 @@ class AccountServiceNetwork implements AccountService {
       Uri.parse('https://odigroup.cd/cbmplus/api/auth/signup/complete/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'email': user.email,
-        'nom': user.name,
-        'prenom': user.firstname,
-        'universite': user.university,
-        'telephone': user.phoneNumber,
+        //'email': user.email,
+        'name': user.firstname,
+        //'prenom': user.firstname,
+        'phone': user.phoneNumber,
+        'university': user.university,
       }),
     );
 

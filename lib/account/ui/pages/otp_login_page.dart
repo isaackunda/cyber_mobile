@@ -29,7 +29,7 @@ class _OtpLoginPageState extends ConsumerState<OtpLoginPage> {
             //mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Vérifie ton adresse e-mail',
+                'Vérifie ton adresse WhatsApp',
                 style: TextStyle(
                   fontSize: 24,
                   fontFamily: 'Poppins',
@@ -38,7 +38,7 @@ class _OtpLoginPageState extends ConsumerState<OtpLoginPage> {
               ),
               SizedBox(height: 16),
               Text(
-                'Un code à 6 chiffres a été envoyé à ton e-mail. Entre-le ici.',
+                'Un code à 6 chiffres a été envoyé à ton numero. Entre-le ici.',
                 style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                 textAlign: TextAlign.center,
               ),
@@ -65,7 +65,7 @@ class _OtpLoginPageState extends ConsumerState<OtpLoginPage> {
                     onPressed: () async {
                       var ctrl = ref.watch(loginCtrlProvider.notifier);
                       var result = await ctrl.otpLogin(
-                        state.email.toString(),
+                        state.phoneNumber.toString(),
                         otpCode,
                       );
 

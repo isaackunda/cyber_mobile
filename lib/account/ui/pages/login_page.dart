@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 import '../../../routers.dart';
 
@@ -15,6 +16,8 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   var emailCtrl = TextEditingController(text: '');
+  //var phoneCtrl = TextEditingController(text: '');
+  var phoneCtrl = '';
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -40,7 +43,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ],
           ),
           Text(
-            'Entre ton adresse e-mail pour accéder à ton compte.',
+            'Entre ton numero WhatsApp pour accéder à ton compte.',
             style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
           ),
           SizedBox(height: 24),
@@ -48,10 +51,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             key: _formKey,
             child: Column(
               children: [
-                TextFormField(
-                  controller: emailCtrl,
+                IntlPhoneField(
+                  //controller: phoneCtrl,
                   decoration: InputDecoration(
-                    labelText: 'Saisissez votre adresse e-mail',
+                    labelText: 'Numéro de téléphone',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(
@@ -59,19 +62,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         width: 1.5, // Épaisseur
                       ),
                     ),
-                    prefixIcon: Icon(
-                      Icons.email, // Icône utilisateur
-                      color:
-                          Theme.of(
-                            context,
-                          ).colorScheme.primary, // Couleur de l'icône
-                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre email';
+                  initialCountryCode: 'CD', // 🇨🇩 Code pays RDC
+                  onChanged: (phone) {
+                    if (kDebugMode) {
+                      print('Numéro : ${phone.completeNumber}');
                     }
-                    return null;
+                    setState(() {
+                      phoneCtrl = phone.completeNumber;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
@@ -87,7 +86,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: ElevatedButton(
                 onPressed: () async {
                   var ctrl = ref.watch(loginCtrlProvider.notifier);
-                  var result = await ctrl.login(emailCtrl.text);
+                  var result = await ctrl.login(phoneCtrl);
 
                   if (!context.mounted) return;
 
@@ -97,7 +96,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   bool pending = result['status'] == 'NOK';
 
                   if (isSuccess) {
-                    emailCtrl.clear();
+                    setState(() {
+                      phoneCtrl = '';
+                    });
+                    //emailCtrl.clear();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(

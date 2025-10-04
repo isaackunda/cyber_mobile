@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 import '../../../routers.dart';
 
@@ -15,6 +16,7 @@ class RegisterOtpPage extends ConsumerStatefulWidget {
 
 class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
   var emailCtrl = TextEditingController(text: '');
+  var phoneCtrl = '';
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -40,7 +42,7 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
             ],
           ),
           Text(
-            'Entre ton adresse e-mail pour commencer ton inscription.',
+            'Entre ton numero WhatsApp pour commencer ton inscription.',
             style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
           ),
           SizedBox(height: 24),
@@ -48,10 +50,10 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
             key: _formKey,
             child: Column(
               children: [
-                TextFormField(
-                  controller: emailCtrl,
+                IntlPhoneField(
+                  //controller: phoneCtrl,
                   decoration: InputDecoration(
-                    labelText: 'Saisissez votre adresse e-mail',
+                    labelText: 'Numéro de téléphone',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(
@@ -59,19 +61,15 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
                         width: 1.5, // Épaisseur
                       ),
                     ),
-                    prefixIcon: Icon(
-                      Icons.email, // Icône utilisateur
-                      color:
-                          Theme.of(
-                            context,
-                          ).colorScheme.primary, // Couleur de l'icône
-                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre email';
+                  initialCountryCode: 'CD', // 🇨🇩 Code pays RDC
+                  onChanged: (phone) {
+                    if (kDebugMode) {
+                      print('Numéro : ${phone.completeNumber}');
                     }
-                    return null;
+                    setState(() {
+                      phoneCtrl = phone.completeNumber;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
@@ -87,7 +85,7 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
               child: ElevatedButton(
                 onPressed: () async {
                   var ctrl = ref.watch(registerAccountCtrlProvider.notifier);
-                  var result = await ctrl.registerEmail(emailCtrl.text);
+                  var result = await ctrl.registerEmail(phoneCtrl);
 
                   if (!context.mounted) return;
 
@@ -101,7 +99,10 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
                   }
 
                   if (isSuccess) {
-                    emailCtrl.clear();
+                    setState(() {
+                      phoneCtrl = '';
+                    });
+                    //emailCtrl.clear();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -112,6 +113,9 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
                     );
                     context.pushNamed(Urls.processRegister.name);
                   } if (pending) {
+                    setState(() {
+                      phoneCtrl = '';
+                    });
                     emailCtrl.clear();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

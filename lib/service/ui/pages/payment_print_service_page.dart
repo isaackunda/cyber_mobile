@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cyber_mobile/account/ui/pages/session_ctrl.dart';
+import 'package:cyber_mobile/routers.dart';
 import 'package:cyber_mobile/service/business/models/order.dart';
 import 'package:cyber_mobile/service/ui/pages/order_ctrl.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_ctrl.dart';
@@ -8,6 +9,7 @@ import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdfx/pdfx.dart';
 
 class PaymentPrintServicePage extends ConsumerStatefulWidget {
@@ -87,6 +89,9 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
           child: StatefulBuilder(
             builder: (context, setState) {
               var payState = ref.watch(paymentCtrlProvider);
+              var sessionState = ref.watch(sessionCtrlProvider);
+              //var payState = ref.watch(paymentCtrlProvider);
+              var fileState = ref.watch(uploadWorkCtrlProvider);
 
               return Padding(
                 padding: EdgeInsets.only(
@@ -151,51 +156,97 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                               return;
                             }
 
-                            var ctrl = ref.watch(paymentCtrlProvider.notifier);
-                            var result = await ctrl.payBill(
-                              number,
-                              state.userData.sessionId,
-                            );
+                            try {
+                              final ctrl = ref.read(
+                                paymentCtrlProvider.notifier,
+                              );
 
-                            if (!context.mounted) return;
+                              // 🟡 ÉTAPE 1 : payBill
+                              final resultPay = await ctrl.payBill(
+                                number,
+                                sessionState.userData.sessionId,
+                              );
 
-                            String messageToShow =
-                                result['message'] ?? 'Opération terminée.';
-                            bool isSucess = result['status'] == 'OK';
-                            bool pending = result['status'] == 'NOK';
+                              final statusPay = resultPay['status'];
+                              final messagePay =
+                                  resultPay['message'] ?? 'Opération terminée.';
 
-                            if (isSucess) {
+                              if (statusPay != 'OK') {
+                                throw Exception(messagePay);
+                              }
+
+                              final start = DateTime.now();
+                              final timeout = const Duration(
+                                seconds: 30,
+                              ); // Par exemple
+
+                              // 🟡 ÉTAPE 2 : checkPayment (attends que le paiement soit confirmé)
+                              final resultCheck = await ctrl.checkPayment(
+                                sessionState.userData.sessionId,
+                                start,
+                                timeout,
+                              );
+
+                              final statusCheck = resultCheck['status'];
+                              final messageCheck =
+                                  resultCheck['message'] ??
+                                  'Opération terminée.';
+
+                              if (statusCheck != 'OK') {
+                                throw Exception(messageCheck);
+                              }
+
+                              // 🟡 ÉTAPE 3 : sendFile (envoi du PDF)
+                              final resultSend = await ctrl.sendFile(
+                                fileState.filepath,
+                                payState.reference,
+                                payState.sessionId,
+                                true,
+                              );
+
+                              final statusSend = resultSend['status'];
+                              final messageSend =
+                                  resultSend['message'] ??
+                                  'Opération terminée.';
+
+                              if (statusSend != 'OK') {
+                                throw Exception(messageSend);
+                              }
+
+                              //if (!context.mounted) return;
+
                               setState(() {
                                 isLoading = false;
                               });
 
-                              /*var orderCtrl = ref.read(
-                                orderCtrlProvider.notifier,
+                              // ✅ TOUT EST RÉUSSI → Ferme le bottom sheet + redirige + snack
+                              Navigator.pop(context); // Ferme le bottom sheet
+
+                              // 👉 ICI : on affiche le SnackBar sur la page parente (PrintPaymentPage)
+                              // Et on redirige vers la page de succès
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Paiement effectué avec succès !\nFichier envoyé.',
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
                               );
-                              var refe = payState.reference;
 
-                              var result = await orderCtrl.updateOrder(refe);
-                              if (!context.mounted) return;*/
-
+                              // ⚡ Redirection vers la page de succès (sans passer par une page "chargement")
+                              context.pushNamed(Urls.paymentSuccessPage.name);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              setState(() => isLoading = false);
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    messageToShow,
-                                    style: TextStyle(fontFamily: 'Poppins'),
-                                  ),
-                                ),
-                              );
-                            } else {
-                              setState(() {
-                                isLoading = false;
-                              });
-                              Navigator.pop(context); //
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    messageToShow,
-                                    style: TextStyle(
+                                    e.toString(),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontFamily: 'Poppins',
                                     ),
@@ -361,24 +412,21 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
 
               SizedBox(
                 width: double.infinity,
-                child:
-                    payState.isLoading
-                        ? CircularProgressIndicator()
-                        : ElevatedButton(
-                          onPressed: () async {
-                            _showPaymentBottomSheet(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          child: const Text(
-                            'Proceder aux paiement',
-                            style: TextStyle(fontFamily: 'Poppins'),
-                          ),
-                        ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    _showPaymentBottomSheet(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: const Text(
+                    'Proceder aux paiement',
+                    style: TextStyle(fontFamily: 'Poppins'),
+                  ),
+                ),
               ),
             ],
           ),

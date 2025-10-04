@@ -11,6 +11,7 @@ import 'package:cyber_mobile/service/ui/pages/home_page.dart';
 import 'package:cyber_mobile/service/ui/pages/main_sreen.dart';
 import 'package:cyber_mobile/service/ui/pages/order_page.dart';
 import 'package:cyber_mobile/service/ui/pages/orders_page.dart';
+import 'package:cyber_mobile/service/ui/pages/payment_success_page.dart';
 import 'package:cyber_mobile/service/ui/pages/print_payment_page.dart';
 import 'package:cyber_mobile/service/ui/pages/payment_print_service_page.dart';
 import 'package:cyber_mobile/service/ui/pages/pdf_preview_page.dart';
@@ -21,6 +22,7 @@ import 'package:cyber_mobile/service/ui/templates/classic_template.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,6 +50,7 @@ enum Urls {
   covers,
   payment,
   paymentPrintService,
+  paymentSuccessPage,
   previewCover,
   profile,
   settings,
@@ -70,7 +73,7 @@ GoRouter router(ref) {
       key: state.pageKey,
       child: child,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0);
+        const begin = Offset(1.0, 0.00);
         const end = Offset.zero;
         final tween = Tween(
           begin: begin,
@@ -228,6 +231,13 @@ GoRouter router(ref) {
         pageBuilder:
             (context, state) =>
                 buildPageWithTransition(PaymentPrintServicePage(), state),
+      ),
+      GoRoute(
+        path: '/payment-success-page',
+        name: Urls.paymentSuccessPage.name,
+        builder: (context, state) {
+          return const PaymentSuccessPage();
+        }
       ),
       GoRoute(
         path: '/payment',

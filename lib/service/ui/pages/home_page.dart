@@ -52,7 +52,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             children: [
               //SizedBox(height: 24),
               Text(
-                'Bienvenue, ${state.userData.firstname}!',
+                'Bienvenue, ${state.userData.name}!',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,

@@ -15,7 +15,7 @@ class RegisterAccountCtrl extends _$RegisterAccountCtrl {
     return RegisterAccountState();
   }
 
-  Future<Map<String, dynamic>> registerEmail(String email) async {
+  Future<Map<String, dynamic>> registerEmail(String phone) async {
     //Declancher le CircularProgressIndicator
     state = state.copyWith(
       isLoading: true,
@@ -29,11 +29,11 @@ class RegisterAccountCtrl extends _$RegisterAccountCtrl {
     }
 
     try {
-      var res = await usecase.execute(email);
+      var res = await usecase.execute(phone);
 
       if (res['status'] == 'OK') {
         state = state.copyWith(
-          email: email,
+          phoneNumber: phone,
           isLoading: false,
           isSuccess: true,
           errorMessage: res['message'],
@@ -61,7 +61,7 @@ class RegisterAccountCtrl extends _$RegisterAccountCtrl {
                 .toList();
 
         state = state.copyWith(
-          email: email,
+          phoneNumber: phone,
           universities: parsedUniversities,
           isLoading: false,
           isSuccess: false,
@@ -152,7 +152,7 @@ class RegisterAccountCtrl extends _$RegisterAccountCtrl {
   }
 
   Future<Map<String, dynamic>> verifyOtpAndRegister(
-    String email,
+    String phone,
     String otp,
   ) async {
     // Déclencher le CircularProgressIndicator
@@ -163,14 +163,14 @@ class RegisterAccountCtrl extends _$RegisterAccountCtrl {
     );
 
     if (kDebugMode) {
-      print(' object 1 $email + object 2 $otp ');
+      print(' object 1 $phone + object 2 $otp ');
     }
 
     final usecase =
         ref.watch(accountInteractorProvider).verifyOtpAndRegisterUseCase;
 
     try {
-      final res = await usecase.execute(email, otp);
+      final res = await usecase.execute(phone, otp);
 
       // On vérifie que "universities" existe bien et est une liste de Map<String, dynamic>
       final List<dynamic>? rawUniversities =

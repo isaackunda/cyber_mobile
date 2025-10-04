@@ -5,8 +5,8 @@ class OtpLoginUseCase {
 
   OtpLoginUseCase(this._accountService);
 
-  Future<dynamic> execute(String email, String otp) {
-    return _accountService.otpLogin(email, otp);
+  Future<dynamic> execute(String phone, String otp) {
+    return _accountService.otpLogin(phone, otp);
   }
 
 }

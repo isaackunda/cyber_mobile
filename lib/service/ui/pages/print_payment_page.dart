@@ -26,6 +26,7 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
   String? _selectedFilePath;
   String? _selectedFileName;
   PdfController? _previewController;
+  String step = '';
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
       builder: (context) {
         var sessionState = ref.watch(sessionCtrlProvider);
         var payState = ref.watch(paymentCtrlProvider);
+        var fileState = ref.watch(uploadWorkCtrlProvider);
 
         return SafeArea(
           child: StatefulBuilder(
@@ -141,12 +143,8 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                             }
 
                             var ctrl = ref.watch(paymentCtrlProvider.notifier);
-                            ctrl.payBill(
+                            var result = await ctrl.payBill(
                               number,
-                              sessionState.userData.sessionId,
-                            );
-
-                            var result = await ctrl.checkPayment(
                               sessionState.userData.sessionId,
                             );
 
@@ -162,14 +160,25 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                                 isLoading = false;
                               });
 
+                              final start = DateTime.now();
+                              final timeout = const Duration(seconds: 30); // Par exemple
+
+                              var result = await ctrl.checkPayment(
+                                sessionState.userData.sessionId, start, timeout
+                              );
+
+                              if (!context.mounted) return;
+
+                              String message =
+                                  result['message'] ?? 'Opération terminée.';
+                              bool isSucess = result['status'] == 'OK';
+                              bool pending = result['status'] == 'NOK';
+
                               /*var orderCtrl = ref.read(
                                 orderCtrlProvider.notifier,
                               );
-                              await orderCtrl.updateOrder(payState.reference);
+                              await orderCtrl.updateOrder(payState.reference);*/
 
-                              if (!context.mounted) return;*/
-
-                              Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
@@ -178,6 +187,68 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                                   ),
                                 ),
                               );
+
+                              if (isSucess) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      message,
+                                      style: TextStyle(fontFamily: 'Poppins'),
+                                    ),
+                                  ),
+                                );
+
+                                var result = await ctrl.sendFile(
+                                  fileState.filepath,
+                                  payState.reference,
+                                  payState.sessionId,
+                                  true,
+                                );
+
+                                if (!context.mounted) return;
+
+                                String messageFileStats =
+                                    result['message'] ?? 'Opération terminée.';
+                                bool isSuccess = result['status'] == 'OK';
+                                bool pending = result['status'] == 'NOK';
+
+                                if (isSuccess) {
+                                  //
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        messageFileStats,
+                                        style: TextStyle(fontFamily: 'Poppins'),
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  //
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        messageFileStats,
+                                        style: TextStyle(fontFamily: 'Poppins'),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                //
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      message,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             } else {
                               setState(() {
                                 isLoading = false;
@@ -224,124 +295,151 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
   @override
   Widget build(BuildContext context) {
     var orderState = ref.watch(orderCtrlProvider);
+    var fileState = ref.watch(paymentCtrlProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text('Paiement')),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: ListView(
-            physics: BouncingScrollPhysics(),
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Aperçu',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const Spacer(),
-                ],
-              ),
-              const SizedBox(
-                height: 16.0,
-              ), // Ajouter un peu d'espace après le titre Aperçu
-              // *** C'EST ICI QUE L'APERÇU DU DOCUMENT EST PLACÉ ***
-              // Afficher l'aperçu si un chemin de fichier est disponible
-              _previewController == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : Container(
-                    height: 300,
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey, width: 1.0),
-                      borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.grey[200],
-                    ),
-                    child: PdfView(
-                      physics: BouncingScrollPhysics(),
-                      controller: _previewController!,
-                      builders: PdfViewBuilders<DefaultBuilderOptions>(
-                        options: const DefaultBuilderOptions(),
-                        pageLoaderBuilder:
-                            (_) => const Center(
-                              child: CircularProgressIndicator(),
+          child:
+              fileState.sendingFile
+                  ? Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 15),
+                          Text(
+                            'Upload du fichier',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Poppins',
                             ),
+                          ),
+                        ],
                       ),
-                      scrollDirection: Axis.vertical,
                     ),
-                  ),
-              SizedBox(height: 6.0),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Résumé de la commande',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 24.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  )
+                  : ListView(
+                    physics: BouncingScrollPhysics(),
                     children: [
-                      Text(
-                        'CommandeID',
-                        style: TextStyle(fontFamily: 'Poppins'),
+                      Row(
+                        children: [
+                          Text(
+                            'Aperçu',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const Spacer(),
+                        ],
                       ),
-                      Text(
-                        orderState.order.ref,
-                        style: TextStyle(
-                          //fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(
+                        height: 16.0,
+                      ), // Ajouter un peu d'espace après le titre Aperçu
+                      // *** C'EST ICI QUE L'APERÇU DU DOCUMENT EST PLACÉ ***
+                      // Afficher l'aperçu si un chemin de fichier est disponible
+                      _previewController == null
+                          ? const Center(child: CircularProgressIndicator())
+                          : Container(
+                            height: 300,
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.grey,
+                                width: 1.0,
+                              ),
+                              borderRadius: BorderRadius.circular(8.0),
+                              color: Colors.grey[200],
+                            ),
+                            child: PdfView(
+                              physics: BouncingScrollPhysics(),
+                              controller: _previewController!,
+                              builders: PdfViewBuilders<DefaultBuilderOptions>(
+                                options: const DefaultBuilderOptions(),
+                                pageLoaderBuilder:
+                                    (_) => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                              ),
+                              scrollDirection: Axis.vertical,
+                            ),
+                          ),
+                      SizedBox(height: 6.0),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Résumé de la commande',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 24.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'CommandeID',
+                                style: TextStyle(fontFamily: 'Poppins'),
+                              ),
+                              Text(
+                                orderState.order.ref,
+                                style: TextStyle(
+                                  //fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total',
+                                style: TextStyle(fontFamily: 'Poppins'),
+                              ),
+                              Text(
+                                orderState.order.total,
+                                style: TextStyle(
+                                  //fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 24.0),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            _showPaymentBottomSheet(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          child: const Text(
+                            'Proceder aux paiement',
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total', style: TextStyle(fontFamily: 'Poppins')),
-                      Text(
-                        orderState.order.total,
-                        style: TextStyle(
-                          //fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(height: 24.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    _showPaymentBottomSheet(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: const Text(
-                    'Proceder aux paiement',
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

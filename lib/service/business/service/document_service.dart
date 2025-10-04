@@ -11,7 +11,7 @@ import '../models/service_data.dart';
 import '../models/template.dart';
 
 abstract class DocumentService {
-  Future<void> uploadFile(File file);
+  Future<Map<String, dynamic>> uploadFile(String file, String reference, String sessionId, bool print);
   Future<List<Template>> getCoverPageTemplates();
   Future<List<Template>> getCvTemplates();
   Future<void> createCoverPage(CoverPageData data);

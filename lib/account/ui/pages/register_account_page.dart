@@ -73,7 +73,7 @@ class _RegisterAccountPageState extends ConsumerState<RegisterAccountPage> {
                       TextFormField(
                         controller: nameCtrl,
                         decoration: InputDecoration(
-                          labelText: 'Nom',
+                          labelText: 'Nom Complet',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
@@ -97,7 +97,7 @@ class _RegisterAccountPageState extends ConsumerState<RegisterAccountPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      /*TextFormField(
                         controller: firstNameCtrl,
                         decoration: InputDecoration(
                           labelText: 'Prénom',
@@ -122,8 +122,8 @@ class _RegisterAccountPageState extends ConsumerState<RegisterAccountPage> {
                           }
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 16),
+                      ),*/
+                      //const SizedBox(height: 16),
 
                       IntlPhoneField(
                         //controller: phoneCtrl,
@@ -148,7 +148,7 @@ class _RegisterAccountPageState extends ConsumerState<RegisterAccountPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      TextFormField(
+                      /*TextFormField(
                         //controller: emailCtrl,
                         enabled: false,
                         decoration: InputDecoration(
@@ -174,8 +174,8 @@ class _RegisterAccountPageState extends ConsumerState<RegisterAccountPage> {
                           }
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 16),
+                      ),*/
+                      //const SizedBox(height: 16),
 
                       // Déclarez votre variable pour stocker l'université sélectionnée
                       // Assurez-vous qu'elle est bien déclarée dans votre State (ex: _MonEcranState)

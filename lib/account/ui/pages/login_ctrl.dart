@@ -16,7 +16,7 @@ class LoginCtrl extends _$LoginCtrl {
     return LoginState();
   }
 
-  Future<Map<String, dynamic>> login(String email) async {
+  Future<Map<String, dynamic>> login(String phone) async {
     //Declancher le CircularProgressIndicator
     state = state.copyWith(
       isLoading: true,
@@ -27,10 +27,10 @@ class LoginCtrl extends _$LoginCtrl {
     var usecase = ref.watch(accountInteractorProvider).loginUseCase;
 
     try {
-      var res = await usecase.execute(email);
+      var res = await usecase.execute(phone);
       if (res['status'] == 'OK') {
         state = state.copyWith(
-          email: email,
+          phoneNumber: phone,
           isLoading: false,
           isSuccess: true,
           errorMessage: res['message'],
@@ -76,7 +76,7 @@ class LoginCtrl extends _$LoginCtrl {
     }
   }
 
-  Future<Map<String, dynamic>> otpLogin(String email, String otp) async {
+  Future<Map<String, dynamic>> otpLogin(String phone, String otp) async {
     // Déclencher le CircularProgressIndicator
     state = state.copyWith(
       isLoading: true,
@@ -87,14 +87,13 @@ class LoginCtrl extends _$LoginCtrl {
     final usecase = ref.watch(accountInteractorProvider).otpLoginUseCase;
 
     try {
-      final res = await usecase.execute(email, otp);
+      final res = await usecase.execute(phone, otp);
       final prefs = await SharedPreferences.getInstance();
 
       if (res['status'] == 'OK') {
         state = state.copyWith(
           sessionId: res['info']['sessionID'],
           name: res['info']['nom'],
-          firstName: res['info']['prénom'],
           phoneNumber: res['info']['téléphone'],
           university: res['info']['université'],
           isLoading: false,
@@ -104,9 +103,9 @@ class LoginCtrl extends _$LoginCtrl {
 
         await prefs.setString('sessionID', res['info']['sessionID']);
         await prefs.setString('user_name', res['info']['nom']);
-        await prefs.setString('user_firstname', res['info']['prénom']);
+        //await prefs.setString('user_firstname', res['info']['prénom']);
         await prefs.setString('phone_number', res['info']['téléphone']);
-        await prefs.setString('email', state.email.toString());
+        //await prefs.setString('email', state.email.toString());
         await prefs.setString('university', res['info']['université']);
 
         return {'status': 'OK', 'message': res['message']};

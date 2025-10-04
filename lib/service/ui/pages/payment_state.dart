@@ -6,6 +6,7 @@ class PaymentState {
   final String montant;
   final String sessionId;
   final bool isLoading;
+  final bool sendingFile;
 
   PaymentState({
     this.dataPrintInfos = const PrintInfo(
@@ -18,6 +19,7 @@ class PaymentState {
     this.reference = 'N/A',
     this.montant = 'N/A',
     this.isLoading = false,
+    this.sendingFile = false,
   });
 
   PaymentState copyWith({
@@ -26,6 +28,7 @@ class PaymentState {
     String? montant,
     String? sessionId,
     bool? isLoading,
+    bool? sendingFile
   }) {
     return PaymentState(
       dataPrintInfos: dataPrintInfos ?? this.dataPrintInfos,
@@ -33,6 +36,7 @@ class PaymentState {
       montant: montant ?? this.montant,
       sessionId: sessionId ?? this.sessionId,
       isLoading: isLoading ?? this.isLoading,
+      sendingFile: sendingFile ?? this.sendingFile
     );
   }
 }

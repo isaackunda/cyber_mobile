@@ -6,7 +6,7 @@ class RegisterRequest {
   final String email;
   final String password;
   final String name;
-  final String firstname;
+  String? firstname;
   String? lastname;
   final String phoneNumber;
   final String university;
@@ -15,7 +15,7 @@ class RegisterRequest {
     required this.email,
     required this.password,
     required this.name,
-    required this.firstname,
+    this.firstname,
     this.lastname,
     required this.phoneNumber,
     required this.university,

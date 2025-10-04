@@ -65,7 +65,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                     SizedBox(height: 12.0),
                     Text(
-                      '${state.userData.firstname} ${state.userData.name}',
+                      state.userData.name,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -74,7 +74,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ),
                     Text(
-                      state.userData.email,
+                      state.userData.university,
                       style: TextStyle(
                         fontSize: 17,
                         //fontWeight: FontWeight.w800,

@@ -63,9 +63,49 @@ class DocumentServiceNetwork implements DocumentService {
   }
 
   @override
-  Future<void> uploadFile(File file) {
-    // TODO: implement uploadFile
-    throw UnimplementedError();
+  Future<Map<String, dynamic>> uploadFile(
+    String file,
+    String reference,
+    String sessionId,
+    bool print,
+  ) async {
+    try {
+      // ✅ CORRECTION CRITIQUE : Supprime les espaces dans l'URL !
+      final url = 'https://odigroup.cd/cbmplus/api/cart/print/send-file/';
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+
+      // Ajouter les champs textuels
+      request.fields['reference'] = reference;
+      request.fields['sessionId'] = sessionId;
+      // Si l'API attend un champ "print" en string, décommente :
+      // request.fields['print'] = print ? 'true' : 'false';
+
+      // Ajouter le fichier sous le champ 'print' (comme demandé par l'API)
+      var multipartFile = await http.MultipartFile.fromPath(
+        'print', // ← Nom du champ attendu par l'API
+        file,
+        filename: file.split('/').last,
+      );
+      request.files.add(multipartFile);
+
+      // Envoyer la requête
+      final response = await request.send();
+
+      // Lire la réponse
+      final responseBody = await response.stream.bytesToString();
+      final Map<String, dynamic> responseData = jsonDecode(responseBody);
+
+      // Retourner la réponse brute (succès ou erreur)
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return responseData;
+      } else {
+        // L'API a retourné une erreur (ex: 400, 500)
+        return {...responseData, 'statusCode': response.statusCode};
+      }
+    } catch (e) {
+      // Erreur réseau, fichier manquant, etc.
+      return {'error': 'Erreur serveur inattendue', 'message': e.toString()};
+    }
   }
 
   @override
@@ -164,7 +204,12 @@ class DocumentServiceNetwork implements DocumentService {
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/cart/print/pay-bill/'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'reference': ref, 'phone': phoneNumber, 'sessionID': sessionId}),
+        body: jsonEncode({
+          'reference': ref,
+          'phone': phoneNumber,
+          'sessionID': sessionId,
+          'reset': '',
+        }),
       );
 
       if (kDebugMode) {

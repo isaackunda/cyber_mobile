@@ -43,7 +43,7 @@ class _OtpRegisterPageState extends ConsumerState<VerifyOtpAndRegisterPage> {
             //mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Vérifie ton adresse e-mail',
+                'Vérifie ton WhatsApp',
                 style: TextStyle(
                   fontSize: 24,
                   fontFamily: 'Poppins',
@@ -52,7 +52,7 @@ class _OtpRegisterPageState extends ConsumerState<VerifyOtpAndRegisterPage> {
               ),
               SizedBox(height: 16),
               Text(
-                'Un code à 6 chiffres a été envoyé à ton e-mail. Entre-le ici.',
+                'Un code à 6 chiffres a été envoyé à ton numero. Entre-le ici.',
                 style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                 textAlign: TextAlign.center,
               ),
@@ -81,7 +81,7 @@ class _OtpRegisterPageState extends ConsumerState<VerifyOtpAndRegisterPage> {
                         registerAccountCtrlProvider.notifier,
                       );
                       var result = await ctrl.verifyOtpAndRegister(
-                        state.email.toString(),
+                        state.phoneNumber.toString(),
                         otpCode,
                       );
 
