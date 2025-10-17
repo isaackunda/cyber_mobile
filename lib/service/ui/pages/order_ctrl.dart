@@ -28,6 +28,7 @@ class OrderCtrl extends _$OrderCtrl {
       nbreDePages: order.nbreDePages,
       total: order.total,
       date: formatted1,
+      link: order.link,
     );
   }
 

@@ -83,7 +83,7 @@ class PaymentCtrl extends _$PaymentCtrl {
         final db = await DatabaseHelper.instance.database;
         await db.update(
           'orders',
-          {'status': 'complété'},
+          {'status': 'Paiement confirmé'},
           where: 'ref = ?',
           whereArgs: [state.reference],
         );
@@ -126,13 +126,13 @@ class PaymentCtrl extends _$PaymentCtrl {
     }
   }
 
-  Future<Map<String, dynamic>> payBill(String phoneNumber, String sId) async {
+  Future<Map<String, dynamic>> payBill(String refe, String phoneNumber, String sId) async {
     state = state.copyWith(isLoading: true);
 
     final usecase = ref.watch(documentInteractorProvider).payBillUseCase;
 
     try {
-      final res = await usecase.execute(state.reference, phoneNumber, sId);
+      final res = await usecase.execute(refe, phoneNumber, sId);
       final status = res['status'];
 
       if (status == 'OK') {

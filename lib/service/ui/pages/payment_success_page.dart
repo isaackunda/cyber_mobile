@@ -1,15 +1,16 @@
 import 'package:cyber_mobile/routers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class PaymentSuccessPage extends StatefulWidget {
+class PaymentSuccessPage extends ConsumerStatefulWidget {
   const PaymentSuccessPage({super.key});
 
   @override
-  State<PaymentSuccessPage> createState() => _PaymentSuccessPageState();
+  ConsumerState<PaymentSuccessPage> createState() => _PaymentSuccessPageState();
 }
 
-class _PaymentSuccessPageState extends State<PaymentSuccessPage>
+class _PaymentSuccessPageState extends ConsumerState<PaymentSuccessPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
@@ -51,11 +52,11 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFE8F5E9), // Vert très clair
+                    color: const Color(0xFFFFE8E8), // Vert très clair
                   ),
                   child: const Icon(
                     Icons.check_circle,
-                    color: Colors.green,
+                    //color: Colors.green,
                     size: 60,
                   ),
                 ),
@@ -97,8 +98,8 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     context.pushReplacementNamed(Urls.main.name);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
+                    //backgroundColor: Colors.blue,
+                    //foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -106,8 +107,10 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     elevation: 4,
                   ),
                   child: Row(
-                    //mainAxisSize: MainAxisSize.center,
+                    //mainAxisAlignment: MainAxisAlignment.start,
+                    //mainAxisSize: MainAxisSize.max,
                     children: [
+                      SizedBox(width: 16.0),
                       const Icon(Icons.home, size: 20),
                       const SizedBox(width: 8),
                       const Text(
@@ -135,7 +138,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                   'Voir mes commandes',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.blue,
+                    //color: Colors.blue,
                     fontFamily: 'Poppins',
                     decoration: TextDecoration.underline,
                   ),

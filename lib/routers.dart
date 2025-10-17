@@ -50,6 +50,7 @@ enum Urls {
   covers,
   payment,
   paymentPrintService,
+  printPaymentService,
   paymentSuccessPage,
   previewCover,
   profile,
@@ -233,11 +234,18 @@ GoRouter router(ref) {
                 buildPageWithTransition(PaymentPrintServicePage(), state),
       ),
       GoRoute(
+        path: '/print-payment-service',
+        name: Urls.printPaymentService.name,
+        pageBuilder:
+            (context, state) =>
+                buildPageWithTransition(PrintPaymentPage(), state),
+      ),
+      GoRoute(
         path: '/payment-success-page',
         name: Urls.paymentSuccessPage.name,
         builder: (context, state) {
           return const PaymentSuccessPage();
-        }
+        },
       ),
       GoRoute(
         path: '/payment',

@@ -201,6 +201,13 @@ class DocumentServiceNetwork implements DocumentService {
     String sessionId,
   ) async {
     try {
+
+      if (kDebugMode) {
+        print('PAIEMENT - DONNÉES ENVOYÉES :');
+        print('ref : $ref');
+        print('phone : $phoneNumber');
+        print('session : $sessionId');
+      }
       final response = await http.post(
         Uri.parse('https://odigroup.cd/cbmplus/api/cart/print/pay-bill/'),
         headers: {'Content-Type': 'application/json'},

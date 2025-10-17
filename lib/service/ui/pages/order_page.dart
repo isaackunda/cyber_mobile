@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:cyber_mobile/account/ui/pages/login_ctrl.dart';
+import 'package:cyber_mobile/routers.dart';
 import 'package:cyber_mobile/service/ui/pages/upload_work_ctrl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdfx/pdfx.dart';
 
 import 'order_ctrl.dart';
@@ -68,21 +70,15 @@ class _ProfilePageState extends ConsumerState<OrderPage> {
             children: [
               Column(
                 children: [
-                  Row(
-                    children: [
-                      //
-                      Text(
-                        'Commande #23456789',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Poppins',
-                          overflow:
-                              TextOverflow.ellipsis, // si jamais ça déborde
-                        ),
-                      ),
-                      Spacer(),
-                    ],
+                  Text(
+                    'Commande #${orderState.order.ref}',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Poppins',
+                      overflow:
+                      TextOverflow.ellipsis, // si jamais ça déborde
+                    ),
                   ),
                   SizedBox(height: 32.0),
                   Row(
@@ -171,7 +167,33 @@ class _ProfilePageState extends ConsumerState<OrderPage> {
                     ],
                   ),
                   SizedBox(height: 32.0),
-                  Row(
+                  if (_previewController == null)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    Container(
+                      height: 300,
+                      //width: double.infinity,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey, width: 1.0),
+                        borderRadius: BorderRadius.circular(8.0),
+                        color: Colors.grey[200],
+                      ),
+                      child: PdfView(
+                        physics: BouncingScrollPhysics(),
+                        controller: _previewController!,
+                        builders: PdfViewBuilders<DefaultBuilderOptions>(
+                          options: const DefaultBuilderOptions(),
+                          pageLoaderBuilder:
+                              (_) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                        ),
+                        scrollDirection: Axis.vertical,
+                      ),
+                    ),
+
+                  /*Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       //
@@ -179,7 +201,7 @@ class _ProfilePageState extends ConsumerState<OrderPage> {
                           ? const Center(child: CircularProgressIndicator())
                           : Container(
                             height: 300,
-                            width: double.infinity,
+                            //width: double.infinity,
                             margin: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
                               border: Border.all(
@@ -212,7 +234,29 @@ class _ProfilePageState extends ConsumerState<OrderPage> {
                       ),*/
                       Spacer(),
                     ],
-                  ),
+                  ),*/
+                  SizedBox(height: 16.0,),
+
+                  if (orderState.order.status == 'Paiement en attente')
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          //
+                          context.pushNamed(Urls.printPaymentService.name);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        child: Text(
+                          'Continuer vers le paiement',
+                          style: TextStyle(fontFamily: 'Poppins'),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],

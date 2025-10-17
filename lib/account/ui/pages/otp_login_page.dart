@@ -38,7 +38,7 @@ class _OtpLoginPageState extends ConsumerState<OtpLoginPage> {
               ),
               SizedBox(height: 16),
               Text(
-                'Un code à 6 chiffres a été envoyé à ton numero. Entre-le ici.',
+                'Un code à 4 chiffres a été envoyé à ton numero. Entre-le ici.',
                 style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
                 textAlign: TextAlign.center,
               ),

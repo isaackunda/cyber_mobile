@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:pdfx/pdfx.dart';
 
 class PaymentPrintServicePage extends ConsumerStatefulWidget {
@@ -23,6 +24,8 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
   String? selectedPayment; // "airtel" ou "mpesa"
   // Variables d'état pour gérer le fichier sélectionné et la progression
   PdfController? _previewController;
+  var phoneCtrl = '';
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -35,9 +38,13 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
       var ctrl = ref.read(orderCtrlProvider.notifier);
       var payState = ref.watch(paymentCtrlProvider);
 
+      if (kDebugMode) {
+        print('object ZIZI filepath ${state.filepath}');
+      }
+
       var data = Order(
         ref: payState.reference,
-        status: 'en attente',
+        status: 'Paiement en attente',
         total: payState.montant,
         nbreDePages: state.selectedPages.length.toString(),
         link: state.filepath,
@@ -52,7 +59,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
     // Libère l'ancien controller s'il existe déjà
     var state = ref.watch(uploadWorkCtrlProvider);
     if (kDebugMode) {
-      print('object ${state.filepath}');
+      print('object filepath : ${state.filepath}');
     }
 
     try {
@@ -120,14 +127,34 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                       style: TextStyle(fontFamily: 'Poppins'),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        //hintText: '0990000000',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          IntlPhoneField(
+                            //controller: phoneCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Numéro de téléphone',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: Colors.white, // Couleur de la bordure
+                                  width: 1.5, // Épaisseur
+                                ),
+                              ),
+                            ),
+                            initialCountryCode: 'CD', // 🇨🇩 Code pays RDC
+                            onChanged: (phone) {
+                              if (kDebugMode) {
+                                print('Numéro : ${phone.completeNumber}');
+                              }
+                              setState(() {
+                                phoneCtrl = phone.completeNumber;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -140,7 +167,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
                               isLoading = true;
                             });
 
-                            final number = phoneController.text.trim();
+                            final number = phoneCtrl;
                             if (number.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -163,6 +190,7 @@ class _PaymentPageState extends ConsumerState<PaymentPrintServicePage> {
 
                               // 🟡 ÉTAPE 1 : payBill
                               final resultPay = await ctrl.payBill(
+                                payState.reference,
                                 number,
                                 sessionState.userData.sessionId,
                               );

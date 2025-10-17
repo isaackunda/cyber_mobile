@@ -176,7 +176,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ],
                   ),*/
                   SizedBox(height: 16.0),
-                  Row(
+                    /*Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       //
@@ -200,7 +200,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       Icon(Icons.arrow_forward),
                     ],
                   ),
-                  SizedBox(height: 16.0),
+                  SizedBox(height: 16.0),*/
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -258,7 +258,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          'En desactivant votre compte, vous ne pourrez pllus accéder à vos données. Cette action est réversible.',
+                          'En desactivant votre compte, vous ne pourrez plus accéder à vos données. Cette action est réversible.',
                           style: TextStyle(fontFamily: 'Poppins'),
                         ),
                         SizedBox(height: 12),

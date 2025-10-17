@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:pdfx/pdfx.dart';
 
 import '../../../routers.dart';
@@ -27,6 +28,8 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
   String? _selectedFileName;
   PdfController? _previewController;
   String step = '';
+  var phoneCtrl = '';
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -50,7 +53,7 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
       _previewController?.dispose();
     } catch (_) {}
 
-    if (await File(state.filepath).exists()) {
+    if (await File(orderState.order.link).exists()) {
       setState(() {
         _previewController = PdfController(
           document: PdfDocument.openFile(orderState.order.link),
@@ -75,13 +78,16 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        var sessionState = ref.watch(sessionCtrlProvider);
-        var payState = ref.watch(paymentCtrlProvider);
-        var fileState = ref.watch(uploadWorkCtrlProvider);
-
+        var state = ref.watch(sessionCtrlProvider);
         return SafeArea(
           child: StatefulBuilder(
             builder: (context, setState) {
+              var payState = ref.watch(paymentCtrlProvider);
+              var sessionState = ref.watch(sessionCtrlProvider);
+              //var payState = ref.watch(paymentCtrlProvider);
+              var fileState = ref.watch(uploadWorkCtrlProvider);
+              var orderState = ref.watch(orderCtrlProvider);
+
               return Padding(
                 padding: EdgeInsets.only(
                   left: 16,
@@ -109,14 +115,34 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                       style: TextStyle(fontFamily: 'Poppins'),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        //hintText: '0990000000',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          IntlPhoneField(
+                            //controller: phoneCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Numéro de téléphone',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                  color: Colors.white, // Couleur de la bordure
+                                  width: 1.5, // Épaisseur
+                                ),
+                              ),
+                            ),
+                            initialCountryCode: 'CD', // 🇨🇩 Code pays RDC
+                            onChanged: (phone) {
+                              if (kDebugMode) {
+                                print('Numéro : ${phone.completeNumber}');
+                              }
+                              setState(() {
+                                phoneCtrl = phone.completeNumber;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -129,7 +155,7 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                               isLoading = true;
                             });
 
-                            final number = phoneController.text.trim();
+                            final number = phoneCtrl;
                             if (number.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -139,126 +165,104 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                                   ),
                                 ),
                               );
+                              setState(() {
+                                isLoading = false;
+                              });
                               return;
                             }
 
-                            var ctrl = ref.watch(paymentCtrlProvider.notifier);
-                            var result = await ctrl.payBill(
-                              number,
-                              sessionState.userData.sessionId,
-                            );
+                            try {
+                              final ctrl = ref.read(
+                                paymentCtrlProvider.notifier,
+                              );
 
-                            if (!context.mounted) return;
+                              // 🟡 ÉTAPE 1 : payBill
+                              final resultPay = await ctrl.payBill(
+                                orderState.order.ref,
+                                number,
+                                sessionState.userData.sessionId,
+                              );
 
-                            String messageToShow =
-                                result['message'] ?? 'Opération terminée.';
-                            bool isSucess = result['status'] == 'OK';
-                            bool pending = result['status'] == 'NOK';
+                              final statusPay = resultPay['status'];
+                              final messagePay =
+                                  resultPay['message'] ?? 'Opération terminée.';
 
-                            if (isSucess) {
+                              if (statusPay != 'OK') {
+                                throw Exception(messagePay);
+                              }
+
+                              final start = DateTime.now();
+                              final timeout = const Duration(
+                                seconds: 30,
+                              ); // Par exemple
+
+                              // 🟡 ÉTAPE 2 : checkPayment (attends que le paiement soit confirmé)
+                              final resultCheck = await ctrl.checkPayment(
+                                sessionState.userData.sessionId,
+                                start,
+                                timeout,
+                              );
+
+                              final statusCheck = resultCheck['status'];
+                              final messageCheck =
+                                  resultCheck['message'] ??
+                                  'Opération terminée.';
+
+                              if (statusCheck != 'OK') {
+                                throw Exception(messageCheck);
+                              }
+
+                              // 🟡 ÉTAPE 3 : sendFile (envoi du PDF)
+                              final resultSend = await ctrl.sendFile(
+                                orderState.order.link,
+                                orderState.order.ref,
+                                sessionState.userData.sessionId,
+                                true,
+                              );
+
+                              final statusSend = resultSend['status'];
+                              final messageSend =
+                                  resultSend['message'] ??
+                                  'Opération terminée.';
+
+                              if (statusSend != 'OK') {
+                                throw Exception(messageSend);
+                              }
+
+                              //if (!context.mounted) return;
+
                               setState(() {
                                 isLoading = false;
                               });
 
-                              final start = DateTime.now();
-                              final timeout = const Duration(seconds: 30); // Par exemple
+                              // ✅ TOUT EST RÉUSSI → Ferme le bottom sheet + redirige + snack
+                              Navigator.pop(context); // Ferme le bottom sheet
 
-                              var result = await ctrl.checkPayment(
-                                sessionState.userData.sessionId, start, timeout
-                              );
-
-                              if (!context.mounted) return;
-
-                              String message =
-                                  result['message'] ?? 'Opération terminée.';
-                              bool isSucess = result['status'] == 'OK';
-                              bool pending = result['status'] == 'NOK';
-
-                              /*var orderCtrl = ref.read(
-                                orderCtrlProvider.notifier,
-                              );
-                              await orderCtrl.updateOrder(payState.reference);*/
-
+                              // 👉 ICI : on affiche le SnackBar sur la page parente (PrintPaymentPage)
+                              // Et on redirige vers la page de succès
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    messageToShow,
-                                    style: TextStyle(fontFamily: 'Poppins'),
+                                    'Paiement effectué avec succès !\nFichier envoyé.',
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                    ),
                                   ),
+                                  backgroundColor: Colors.green,
                                 ),
                               );
 
-                              if (isSucess) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      message,
-                                      style: TextStyle(fontFamily: 'Poppins'),
-                                    ),
-                                  ),
-                                );
-
-                                var result = await ctrl.sendFile(
-                                  fileState.filepath,
-                                  payState.reference,
-                                  payState.sessionId,
-                                  true,
-                                );
-
-                                if (!context.mounted) return;
-
-                                String messageFileStats =
-                                    result['message'] ?? 'Opération terminée.';
-                                bool isSuccess = result['status'] == 'OK';
-                                bool pending = result['status'] == 'NOK';
-
-                                if (isSuccess) {
-                                  //
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        messageFileStats,
-                                        style: TextStyle(fontFamily: 'Poppins'),
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  //
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        messageFileStats,
-                                        style: TextStyle(fontFamily: 'Poppins'),
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                //
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      message,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            } else {
-                              setState(() {
-                                isLoading = false;
-                              });
-                              Navigator.pop(context); //
+                              // ⚡ Redirection vers la page de succès (sans passer par une page "chargement")
+                              context.pushNamed(Urls.paymentSuccessPage.name);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              setState(() => isLoading = false);
+                              Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    messageToShow,
-                                    style: TextStyle(
+                                    e.toString(),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontFamily: 'Poppins',
                                     ),
@@ -403,12 +407,42 @@ class _PrintPaymentPageState extends ConsumerState<PrintPaymentPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              Text('Nombre de pages'),
+                              Text(
+                                orderState.order.nbreDePages,
+                                style: TextStyle(
+                                  //fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                               Text(
                                 'Total',
                                 style: TextStyle(fontFamily: 'Poppins'),
                               ),
                               Text(
                                 orderState.order.total,
+                                style: TextStyle(
+                                  //fontSize: 16,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Livraison'),
+                              Text(
+                                'Standard (3-5 jours)',
                                 style: TextStyle(
                                   //fontSize: 16,
                                   fontFamily: 'Poppins',

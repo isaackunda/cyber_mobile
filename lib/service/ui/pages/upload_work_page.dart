@@ -35,13 +35,14 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
   List<int> _selectedPages = [];
   int _pageCount = 0;
   Uint8List? _generatedPdf;
-  late PdfController _previewController;
+  PdfController? _previewController;
   final Map<int, PdfControllerPinch> _pageControllers = {};
   File? _pdfFile;
   PdfDocument? _pdfDoc;
   File? savedFile;
   bool isChecked = false;
   bool isLoading = false;
+  bool _isFileValid = false;
 
   @override
   void initState() {
@@ -49,80 +50,58 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
     // Vous pouvez initialiser des valeurs par défaut si nécessaire
   }
 
-  Future<void> _loadPreviewPdf(String filePath) async {
-    // Libère l'ancien controller s'il existe déjà
-    try {
-      _previewController.dispose();
-    } catch (_) {}
-
-    setState(() {
-      _previewController = PdfController(
-        document: PdfDocument.openFile(filePath),
-      );
-    });
-  }
-
   // Fonction pour sélectionner le fichier PDF
+
   Future<void> pickPdfFile() async {
     try {
+      // ... sélection avec FilePicker
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
 
       if (result != null) {
-        PlatformFile file = result.files.first;
-        final filex = File(result.files.single.path!);
-        final doc = await PdfDocument.openFile(filex.path);
-        _pageControllers.clear();
-        for (int i = 1; i <= doc.pagesCount; i++) {
-          _pageControllers[i] = PdfControllerPinch(
-            document: PdfDocument.openFile(filex.path),
-            initialPage: i,
-          );
-        }
-        if (kDebugMode) {
-          print(' filex : $filex');
-        }
+        final file = result.files.first;
+        final tempFile = File(file.path!);
 
-        if (file.path != null) {
-          _selectedFilePath = file.path;
+        // Copier dans le dossier app
+        final appDir = await getApplicationDocumentsDirectory();
+        final newPath = '${appDir.path}/${file.name}';
+        savedFile = await tempFile.copy(newPath);
+
+        // Valider le fichier
+        _isFileValid =
+            await savedFile!.exists() && (await savedFile!.length() > 0);
+
+        if (_isFileValid) {
+          _selectedFilePath = savedFile!.path;
           _selectedFileName = file.name;
-          _fileSizeMB = file.size / (1024 * 1024); // Convertir en Mo
-          _downloadProgress = 1.0;
-          _pdfFile = filex;
-          _pdfDoc = doc;
-          _pageCount = doc.pagesCount;
-          _selectedPages = [];
-          _selectedPagesInput = '';
-          _generatedPdf = null;
+          _fileSizeMB = file.size / (1024 * 1024);
+          _pageCount = (await PdfDocument.openFile(savedFile!.path)).pagesCount;
 
-          print(' _pdfFile 1 : $_pdfFile');
-          print(' _pdfFile 1 : ${file.path}');
-
-          await _loadPreviewPdf(file.path!);
-
-          print(' _pdfFile 2 : $_pdfFile');
-          print(' _pdfFile 3 : ${_pdfFile!}');
-          print(' _pdfFile 4 : $filex');
-
-          final appDir = await getApplicationDocumentsDirectory();
-          final newPath = '${appDir.path}/${file.name}';
-          savedFile = await filex.copy(newPath);
-
-          print(savedFile);
-
-          setState(() {}); // Rafraîchir l’UI
-        } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Fichier invalide.')));
+          await _loadPreviewPdf(savedFile!.path); // ✅ Utilise savedFile
         }
+
+        setState(() {});
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erreur : $e')));
+      // gestion erreur
+    }
+  }
+
+  Future<void> _loadPreviewPdf(String filePath) async {
+    _previewController?.dispose();
+    try {
+      setState(() {
+        _previewController = PdfController(
+          document: PdfDocument.openFile(filePath),
+        );
+      });
+    } catch (e) {
+      // gestion erreur
+      setState(() {
+        _previewController = null;
+      });
     }
   }
 
@@ -287,6 +266,9 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentPreviewController = _previewController;
+    final currentSelectedPath = _selectedFilePath;
+
     // Largeur maximale pour le conteneur de l'aperçu
     double previewWidth =
         MediaQuery.of(context).size.width -
@@ -437,7 +419,8 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
             ), // Ajouter un peu d'espace après le titre Aperçu
             // *** C'EST ICI QUE L'APERÇU DU DOCUMENT EST PLACÉ ***
             // Afficher l'aperçu si un chemin de fichier est disponible
-            if (_selectedFilePath != null &&
+            if (currentPreviewController != null &&
+                currentSelectedPath != null &&
                 File(_selectedFilePath!).existsSync())
               Container(
                 height: 300,
@@ -450,7 +433,7 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
                 ),
                 child: PdfView(
                   physics: BouncingScrollPhysics(),
-                  controller: _previewController,
+                  controller: currentPreviewController,
                   builders: PdfViewBuilders<DefaultBuilderOptions>(
                     options: const DefaultBuilderOptions(),
                     pageLoaderBuilder:
@@ -551,7 +534,7 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
                 });
               },
             ),*/
-            if (_selectedFilePath != null) ...[
+            /*if (_selectedFilePath != null) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -571,117 +554,155 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
               ),
 
               SizedBox(height: 16.0),
-            ],
-
+            ],*/
             if (_selectedFilePath != null)
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_pdfFile != null) {
-                      var ctrl = ref.read(uploadWorkCtrlProvider.notifier);
-                      if (kDebugMode) {
-                        print('object saved dile $savedFile');
-                      }
-
-                      if (_selectedPages.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Aucune page selectionner.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-
-                        return;
-                      }
-
-                      await ctrl.setPdf(savedFile!);
-
-                      if (!context.mounted) return;
-
-                      ctrl.updateSelectedPages(_selectedPages);
-                      if (kDebugMode) {
-                        print('object file $savedFile');
-                        print('object pages $_selectedPages');
-                      }
-
-                      //pickPdfFile();
-                      //widget.onNext();
-                      if (!isChecked) {
-                        //
-                        final result = await _handlePdfCreation();
-
-                        String messageToShow =
-                            result['message'] ?? 'Opération terminée.';
-                        bool isSuccess = result['status'] == 'OK';
-
-                        if (!context.mounted) return;
-
-                        if (!isSuccess) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                messageToShow,
+                child:
+                    isLoading
+                        ? Center(
+                          child: Column(
+                            children: [
+                              CircularProgressIndicator(),
+                              /*SizedBox(height: 12.0),
+                              Text(
+                                'Veiller patienter...',
                                 style: TextStyle(
-                                  color: Colors.white,
                                   fontFamily: 'Poppins',
+                                  overflow: TextOverflow.ellipsis,
+                                  fontSize: 12, // si jamais ça déborde
                                 ),
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
+                              ),*/
+                            ],
+                          ),
+                        )
+                        : ElevatedButton(
+                          onPressed:
+                              isLoading
+                                  ? null
+                                  : () async {
+                                    if (currentSelectedPath != null) {
+                                      var ctrl = ref.read(
+                                        uploadWorkCtrlProvider.notifier,
+                                      );
+                                      if (kDebugMode) {
+                                        print('object saved dile $savedFile');
+                                      }
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              messageToShow,
-                              style: TextStyle(fontFamily: 'Poppins'),
+                                      if (_selectedPages.isEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Aucune page selectionner.',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+
+                                        return;
+                                      }
+
+                                      await ctrl.setPdf(savedFile!);
+
+                                      if (!context.mounted) return;
+
+                                      ctrl.updateSelectedPages(_selectedPages);
+                                      if (kDebugMode) {
+                                        print('object file $savedFile');
+                                        print('object pages $_selectedPages');
+                                      }
+
+                                      //pickPdfFile();
+                                      //widget.onNext();
+                                      if (!isChecked) {
+                                        //
+                                        final result =
+                                            await _handlePdfCreation();
+
+                                        String messageToShow =
+                                            result['message'] ??
+                                            'Opération terminée.';
+                                        bool isSuccess =
+                                            result['status'] == 'OK';
+
+                                        if (!context.mounted) return;
+
+                                        if (!isSuccess) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                messageToShow,
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              messageToShow,
+                                              style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                        //context.pushNamed(Urls.paymentPrintService.name);
+                                        showPrintModeSelector(context);
+                                      } else {
+                                        context.pushNamed(
+                                          Urls.covers.name,
+                                          extra: savedFile,
+                                        );
+                                      }
+
+                                      //context.pushNamed(Urls.covers.name, extra: savedFile);
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Aucun fichier sélectionné.',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
-                        );
-                        //context.pushNamed(Urls.paymentPrintService.name);
-                        showPrintModeSelector(context);
-                      } else {
-                        context.pushNamed(Urls.covers.name, extra: savedFile);
-                      }
-
-                      //context.pushNamed(Urls.covers.name, extra: savedFile);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Aucun fichier sélectionné.',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'Poppins',
-                            ),
+                          child: Text(
+                            isChecked
+                                ? 'Ajouter une page de garde'
+                                : 'Continuer vers le paiement',
+                            style: TextStyle(fontFamily: 'Poppins'),
                           ),
-                          backgroundColor: Colors.red,
                         ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: Text(
-                    isChecked
-                        ? 'Ajouter une page de garde'
-                        : 'Continuer vers le paiement',
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                ),
               ),
             SizedBox(height: 24),
           ],

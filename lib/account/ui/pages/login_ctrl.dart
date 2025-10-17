@@ -43,7 +43,7 @@ class LoginCtrl extends _$LoginCtrl {
           isSuccess: false,
           errorMessage: res['message'],
         );
-        return {'status': 'OK', 'message': res['message']};
+        return {'status': 'KO', 'message': res['message']};
       } else {
         // Do nothing if the email is already set
         state = state.copyWith(

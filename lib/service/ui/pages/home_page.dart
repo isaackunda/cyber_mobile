@@ -126,7 +126,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ],
               ),
 
-              SizedBox(height: 24),
+              /*SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
@@ -255,7 +255,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ],
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 24),*/
 
               /*Row(
                 children: [
