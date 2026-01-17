@@ -41,9 +41,18 @@ class _RegisterOtpPageState extends ConsumerState<RegisterOtpPage> {
               ),
             ],
           ),
-          Text(
-            'Entre ton numero WhatsApp pour commencer ton inscription.',
-            style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+              children: [
+                TextSpan(text: 'Entre ton numero '),
+                TextSpan(
+                  text: 'WhatsApp',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: ' pour commencer ton inscription.'),
+              ],
+            ),
           ),
           SizedBox(height: 24),
           Form(

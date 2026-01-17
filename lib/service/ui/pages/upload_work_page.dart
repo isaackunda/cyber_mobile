@@ -496,10 +496,36 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
                 spacing: 10,
                 children: [
                   ChoiceChip(
-                    label: Text("Tout sélectionner"),
-                    selected: false,
+                    label: Text(
+                      "Tout sélectionner",
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                        fontFamily: 'Poppins'
+                      ),
+                    ),
+                    selected: false, // fixe, pas besoin d'état ici
+                    backgroundColor: Colors.white,
+                    elevation: 3,
+                    pressElevation: 6,
+                    shadowColor: Colors.black12,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      side: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1,
+                      ),
+                    ),
+                    avatar: Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.grey.shade400,
+                      size: 18,
+                    ),
                     onSelected: (_) => _selectQuick('all'),
-                  ),
+                  )
+
                 ],
               ),
               SizedBox(height: 12),
@@ -881,10 +907,10 @@ class _UploadWorkPageState extends ConsumerState<UploadWorkPage> {
                       leading: const Icon(Icons.print, color: Colors.grey),
                       title: const Text("Noir et Blanc"),
                       trailing:
-                          selectedMode == 'bw'
+                          selectedMode == 'n&b'
                               ? const Icon(Icons.check_circle)
                               : null,
-                      onTap: () => setState(() => selectedMode = 'bw'),
+                      onTap: () => setState(() => selectedMode = 'n&b'),
                     ),
 
                     // Option Couleur
